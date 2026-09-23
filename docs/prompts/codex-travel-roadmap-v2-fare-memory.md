@@ -22,7 +22,7 @@ Este documento no sustituye a la documentacion viva del repo. Codex debe leer pr
 - `docs/overview/project-overview.md`
 - `docs/overview/current-state.md`
 - `docs/reference/backend/quick-search-contract.md`
-- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
 - `docs/product/quick-search.md`
 - `docs/product/watchlist.md`
 - `docs/product/door-to-door.md`
@@ -312,7 +312,7 @@ Antes de construir nada, localizar exactamente que existe ya en cache compartida
 - Hay cache negativa?
 - Hay diferencia entre fallo provider, cero resultados y ruta invalida?
 - Que tests ya cubren cache?
-- Que partes de `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md` estan hechas?
+- Que partes de `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md` estan hechas?
 
 **Entregable**
 
@@ -979,7 +979,7 @@ powershell -ExecutionPolicy Bypass -File .\scripts\release_guard.ps1 -AllowDirty
 ```text
 Estamos en Viru Air. Las fases 1-20 del roadmap anterior ya estan completadas. Usa el nuevo roadmap v2: `docs/prompts/codex-travel-roadmap-v2-fare-memory.md`.
 
-Empieza por la Fase 21: auditar la cache existente de Quick Search V2.1 y el historico de precios antes de construir nada. No dupliques caches. No crees migraciones. No actives scraping ni APIs de pago. Lee `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `DESIGN.md`, `docs/reference/backend/quick-search-contract.md`, `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md` y los modelos/servicios/tests reales de quick-search, prices, watchlist y alerts.
+Empieza por la Fase 21: auditar la cache existente de Quick Search V2.1 y el historico de precios antes de construir nada. No dupliques caches. No crees migraciones. No actives scraping ni APIs de pago. Lee `AGENTS.md`, `backend/AGENTS.md`, `frontend/AGENTS.md`, `DESIGN.md`, `docs/reference/backend/quick-search-contract.md`, `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md` y los modelos/servicios/tests reales de quick-search, prices, watchlist y alerts.
 
 Entregable: informe tecnico con tabla de que existe, donde esta, que cubren los tests, que falta para Viru Fare Memory y que decision recomiendas para fases 22-26. Verifica con tests existentes de cache si los hay. Si hay drift documental, reportalo con fuente preferida.
 ```

@@ -119,12 +119,12 @@ npm.cmd run qa:visual:quick-search
   2. si detecta redireccion a `/login`, completa login automaticamente;
   3. vuelve a `/quick-search` y captura evidencias;
   4. abre el menu de tres puntos de la primera fila, activa `Detalles` cuando existe y reporta si detecta `.qs-result-weather`.
-- Salidas esperadas:
+- Salidas esperadas (generadas por `frontend/scripts/qa_quick_search_visual.mjs` en su próxima ejecución; las capturas actuales se purgaron el 2026-09-23):
   - `docs/qa/quick-search-visual-report.json`
-  - `docs/qa/snapshots_quick-search-desktop.png`
-  - `docs/qa/snapshots_quick-search-tablet768.png`
-  - `docs/qa/snapshots_quick-search-mobile375.png`
-  - `docs/qa/snapshots_quick-search-mobile320.png`
+  - docs/qa/snapshots_quick-search-desktop.png
+  - docs/qa/snapshots_quick-search-tablet768.png
+  - docs/qa/snapshots_quick-search-mobile375.png
+  - docs/qa/snapshots_quick-search-mobile320.png
 - Campos clave que hay que revisar en `quick-search-visual-report.json`:
   - `auth.success`: confirma sesion valida para ruta privada.
   - `snapshots[*].resultsVisible`: numero de filas visibles en resultados.
@@ -164,8 +164,8 @@ npm.cmd run qa:visual:quick-search
 node frontend/scripts/qa_capture_i18n_english.mjs
 ```
 
-- Salidas esperadas:
-  - `docs/qa/i18n-english-audit-report.json`
+- Salidas esperadas (generadas por el script; el reporte actual se purgó el 2026-09-23):
+  - docs/qa/i18n-english-audit-report.json
   - `docs/qa/i18n-en-*.png`
 
 #### Criterio de aceptacion para cerrar una verificacion de clima en detalles

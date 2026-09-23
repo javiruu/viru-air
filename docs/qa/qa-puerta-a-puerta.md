@@ -123,7 +123,7 @@ Indicadores a monitorizar por entorno:
 
 ## Criterios de aceptación por fase
 
-Ver `docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md` para los criterios de done de cada fase.
+Ver `docs/archive/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md` para los criterios de done de cada fase.
 
 | Fase | Criterio de done | Verificado |
 |------|-----------------|-----------|

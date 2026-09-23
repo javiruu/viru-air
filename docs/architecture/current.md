@@ -15,7 +15,7 @@
 [ Next.js 15 App Router Frontend (Port 3000) ]
        │  (Turbopack / React 19 / TypeScript)
        │  Modules: quick-search, watchlist, hotels, door-to-door, signals, account
-       │  API Client: modules/shared/api.ts, modules/hotels/api.ts, modules/door-to-door/api.ts
+       │  API Client: Orval generado en api/generated/* (mutator: api/mutator/custom-client.ts), módulos: hotels/api.ts, door-to-door/api.ts
        │
        ▼  HTTP / REST (JSON, Bearer JWT, Correlation IDs, Client-Event-ID)
 [ FastAPI Backend (Port 8000) ]
@@ -57,7 +57,7 @@ Total de endpoints registrados: **155** (151 API + 4 documentación/OpenAPI).
 
 | Dominio | Prefijo Ruta | Métodos | Auth Requerida | Principales Handlers | Consumidores Frontend |
 |---|---|---|---|---|---|
-| **Auth** | `/api/v1/auth` | POST, GET | Pública / Bearer JWT | `register`, `login`, `me`, `refresh`, `logout`, `forgot_password`, `reset_password` | `modules/shared/api.ts` (LoginModal, SessionProvider) |
+| **Auth** | `/api/v1/auth` | POST, GET | Pública / Bearer JWT | `register`, `login`, `me`, `refresh`, `logout`, `forgot_password`, `reset_password` | `api/generated/auth/*` + `modules/shared/*` (LoginModal, SessionProvider) |
 | **Search (Vuelos)** | `/api/v1/search` | GET, POST | Opcional / Pública | `quick_search`, `search_stream`, `search_calendar`, `search_combinations` | `modules/quick-search` (QuickSearchView) |
 | **Watchlist** | `/api/v1/watchlist` | GET, POST, DELETE, PATCH | `get_current_user` | `list_watchlist`, `create_watch`, `delete_watch`, `refresh_watch`, `get_history` | `modules/watchlist` (WatchlistView, Panels) |
 | **Hotels** | `/api/v1/hotels` | GET, POST, DELETE, PATCH | Opcional / `get_current_user` | `search_hotels`, `area_search`, `tracked_offers`, `comp_sets`, `alert_rules`, `rates`, `parity` | `modules/hotels` (HotelRadarPage, HotelDetail) |
@@ -107,8 +107,7 @@ Total de endpoints registrados: **155** (151 API + 4 documentación/OpenAPI).
   - `get_current_active_user`: Comprueba flag `is_active`.
   - `require_admin`: Comprueba que `user.role == "admin"`.
 - **Seguridad en Frontend:**
-  - El frontend guarda el access token y refresh token de forma centralizada (`modules/shared/api.ts`).
-  - Interceptor con cola de renovación automática en errores 401.
+  - El frontend gestiona la sesión vía Supabase Auth SSR (@supabase/ssr, cookies + middleware) y el mutator de Orval (`api/mutator/custom-client.ts`) inyecta el Bearer token en cada llamada.
 
 ---
 
@@ -154,7 +153,7 @@ Total de endpoints registrados: **155** (151 API + 4 documentación/OpenAPI).
   - 0 `except:` genéricos o `except...: pass` desatendidos.
   - 0 `TODO`/`FIXME`/`HACK` en código activo de backend.
   - 0 `@ts-ignore` o `@ts-nocheck` en frontend.
-  - 4 llamadas `fetch` directas (3 en `modules/shared/api.ts` centralizado, 1 en `weatherUtils.ts`).
+  - Llamadas `fetch` centralizadas en el mutator de Orval (`api/mutator/custom-client.ts`); sin fetchs dispersos en módulos.
 - **Áreas con oportunidad de consolidación:**
   - 162 `useEffect` en frontend, muchos de ellos sincronizando estado remoto manualmente (serán reemplazados por TanStack Query en Fase 1).
   - `QuickSearchView.tsx` (6,187 líneas) agrupa lógica de presentación, estado de filtros, manipulación de URL y renderizado de resultados.
@@ -183,7 +182,7 @@ Total de endpoints registrados: **155** (151 API + 4 documentación/OpenAPI).
 | Sistema de i18n (@/i18n) | **KEEP** | Estructura bilingüe centralizada sin mojibake. |
 | Monolito `QuickSearchView.tsx` | **REFACTOR** | Modularizar en componentes UI reutilizables (chips, filtros, cards). |
 | Estado remoto en `useEffect` | **REFACTOR** | Migrar a TanStack Query v5 (`06_TANSTACK_QUERY.md`). |
-| Cliente HTTP manual (`modules/shared/api.ts`)| **REPLACE** | Generar cliente tipado con Orval a partir de OpenAPI (`04_OPENAPI.md`, `05_ORVAL.md`). |
+| Cliente HTTP manual (módulo modules/shared/api.ts, eliminado) | **DONE (REPLACED)** | Sustituido por cliente tipado Orval (`api/generated/*` + mutator `api/mutator/custom-client.ts`). |
 | Persistencia SQLite única | **REPLACE** | Conectar a Supabase PostgreSQL para entorno multiusuario (`08_SUPABASE.md`). |
 | Tooling ESLint / Prettier clásico | **REPLACE** | Reemplazar por Biome (`02_BIOME.md`). |
 | Ficheros temporales `_tmp_*.db` en backend | **DELETE** | Artefactos temporales de migraciones de prueba anteriores. |

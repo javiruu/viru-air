@@ -14,7 +14,7 @@ Viru historically used Alembic for incremental database migrations alongside SQL
 ## Decision
 
 1. **Sole DDL Authority:** `supabase/migrations/` is the single, exclusive source of truth for all database schema definition and DDL operations across all environments.
-2. **Alembic Decommissioning:** Alembic has been permanently retired and deleted from the active tree (`backend/alembic.ini`, `backend/alembic/`, `backend/app/infrastructure/db/alembic_audit.py`, and `pyproject.toml` dependency removed). Git history preserves historical revisions.
+2. **Alembic Decommissioning:** Alembic has been permanently retired and deleted from the active tree (`backend/alembic.ini`, `backend/alembic/`, the `alembic_audit.py` helper, and `pyproject.toml` dependency removed). Git history preserves historical revisions.
 3. **Canonical Baseline:** `supabase/migrations/20260912000001_canonical_baseline_schema.sql` establishes the complete 62 application tables, followed by `20260912000002_enable_user_rls_policies.sql` establishing user-level RLS policies.
 4. **Role of SQLAlchemy:** SQLAlchemy remains the active backend ORM, query builder, and model layer for FastAPI. DDL is never executed at runtime.
 5. **SQLite Retirement:** SQLite is completely removed from runtime paths and configuration.

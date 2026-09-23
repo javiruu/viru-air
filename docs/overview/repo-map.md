@@ -14,7 +14,7 @@ Related: docs/INDICE_UNICO.md, README.md
 - `infra/`: configuracion de despliegue (cloudflare-tunnel.example.yml), workflows y manifests.
 - `scripts/`: utilidades de soporte del repo (túneles, publicación, sanitización).
 - `testsprite_tests/`: tests y artefactos del flujo Testsprite; los reportes documentales se han archivado en `docs/archive/tooling/`.
-- `skills/`: skills reutilizables para agentes (viru-air-context, phase1-mvp, taste-skill; supabase* son symlinks a `.agents/skills/`).
+- `skills/`: skills reutilizables para agentes (viru-air-context, taste-skill; supabase* son symlinks a `.agents/skills/`).
 
 ## Directorios clave del frontend
 
@@ -36,8 +36,7 @@ Related: docs/INDICE_UNICO.md, README.md
 - `docs/engineering/`: resúmenes técnicos por capa.
 - `docs/runbooks/`: operación y respuesta ante incidentes.
 - `docs/qa/`: checklists, reportes y referencias QA reutilizables (evidencia binaria solo de runs vigentes; los reruns históricos se purgaron el 2026-09-23).
-- `docs/plans/`: planes activos y completados.
-- `HISTORY.md`: historial resumido de cambios relevantes.
+- `docs/plans/`: planes activos y completados (los cerrados se archivan en `docs/archive/plans/`).
 
 ## Archivo histórico
 

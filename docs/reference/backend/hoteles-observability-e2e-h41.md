@@ -402,7 +402,7 @@ No se añade un servicio externo de observabilidad sin investigar opciones actua
 |---|---|---:|---|
 | H41-P0-01 | Correlación no demostrada de UI→API→provider→worker→event/inbox | P0 | **Parcialmente cerrado en cinco tramos:** browser→API por request, intent estable browser→API para resultados y detalle/rates/parity, API→provider/DB para ingestión/sweeps y worker→provider-run→snapshot/event están probados; queda provider live completo, inbox/delivery y fixture multiusuario |
 | H41-P0-02 | No hay dashboards RED/provider activos ni métricas RED/provider persistentes | P0 | backend de métricas elegido, dashboard RED/provider y consulta de ejemplo; el ledger diario agregado, endpoint admin local y cabina operativa visual admin están implementados |
-| H41-P0-03 | `HotelProviderRun` no expresa todos los outcomes/latencia/budget del contrato H09 | P0 | **Parcialmente cerrado:** endpoint admin de runs recientes calcula duración desde timestamps y devuelve outcomes/items de forma segura; `latency_sink` mide fixture/canary en ingestion, revalidation y area search y, cuando existe run, persiste agregados multi-operación mediante `0053`; siguen faltando budget/cost, resumen por unidad, provider live y evidencia de canary real. El [plan de contrato de latencia](../../plans/2026-08-09-hotel-provider-latency-contract-plan.md) distingue esta persistencia local de las métricas field |
+| H41-P0-03 | `HotelProviderRun` no expresa todos los outcomes/latencia/budget del contrato H09 | P0 | **Parcialmente cerrado:** endpoint admin de runs recientes calcula duración desde timestamps y devuelve outcomes/items de forma segura; `latency_sink` mide fixture/canary en ingestion, revalidation y area search y, cuando existe run, persiste agregados multi-operación mediante `0053`; siguen faltando budget/cost, resumen por unidad, provider live y evidencia de canary real. El [plan de contrato de latencia](../../archive/plans/2026-08-09-hotel-provider-latency-contract-plan.md) distingue esta persistencia local de las métricas field |
 | H41-P0-04 | Redaction incompleta de excepciones Makcorps y errores frontend | P0 | tests con API key en query, URL firmada, email/token en stack y newline injection |
 | H41-P0-05 | No hay alertas operativas de freshness, sweep missed, 429, timeout, delivery backlog o cost | P0 | reglas con owner/runbook/cooldown y prueba de firing/recovery |
 | H41-P0-06 | Formatter JSON-like y `str(exc)` pueden permitir log injection o exposición de URL/query | P0 | **Parcialmente cerrado en sinks locales:** `SafeJsonFormatter` usa serialización segura, redaction de query/Authorization/Cookie/URLs firmadas y regresiones de comillas/newlines/secrets; queda validar formatos adicionales y operación centralizada |
@@ -508,8 +508,8 @@ Este delta no convierte H41-P0-01 en cierre completo ni declara un ID estable de
 
 ## 11.3. Delta browser→API por request (2026-08-08)
 
-- La capa compartida `frontend/src/modules/shared/api.ts` ya genera `x-correlation-id` opaco para `apiFetch`, `apiFetchWithStatus` y best-effort, por lo que las llamadas hoteleras lo heredan sin duplicar lógica.
-- `frontend/tests/api-correlation.test.ts` verifica el header real enviado en una ruta `/hotels/*`, la preservación de headers caller-safe y la generación de IDs distintos por request.
+- La capa de API de hoy — cliente tipado Orval con mutator `frontend/src/api/mutator/custom-client.ts` (el antiguo módulo modules/shared/api.ts fue eliminado) — ya genera `x-correlation-id` opaco para todas las llamadas, por lo que las llamadas hoteleras lo heredan sin duplicar lógica.
+- La verificación de correlación del ciclo H41 usaba el test frontend/tests/api-correlation.test.ts (hoy retirado; la cobertura de correlación vive en el mutator y los tests de Orval).
 - La misma capa ya conserva el `x-correlation-id` de respuesta en `ApiError.correlation_id` para diagnósticos de errores.
 - Validación frontend: typecheck, ESLint y **4 tests** de correlación/error observability pasados.
 
@@ -627,7 +627,7 @@ Este delta mejora la lectura de outcomes persistidos sin añadir latencia provid
 
 ## 11.14. Delta de contrato de latencia provider (2026-08-09)
 
-- Se añade el [plan de contrato de latencia provider](../../plans/2026-08-09-hotel-provider-latency-contract-plan.md), el modelo `HotelProviderLatencyAggregate` y la migración reversible `0053_hotel_provider_latency_aggregate`; no se activa ninguna llamada live.
+- Se añade el [plan de contrato de latencia provider](../../archive/plans/2026-08-09-hotel-provider-latency-contract-plan.md), el modelo `HotelProviderLatencyAggregate` y la migración reversible `0053_hotel_provider_latency_aggregate`; no se activa ninguna llamada live.
 - El contrato separa `provider_duration_ms` de `run_duration_seconds`, exige reloj monotónico alrededor de la llamada efectiva y mantiene outcomes/error codes allowlisted sin PII, URLs, credenciales ni payloads.
 - La persistencia agrega varias operaciones, intentos y outcomes por `HotelProviderRun`; la clave incluye provider/operation/outcome/error code y la escritura es bounded, idempotente por grupo y sin commit interno.
 - Este delta no aporta muestras productivas ni cierra el canary real: la latencia provider agregada por run está persistida y cubierta con migración/tests; la evidencia field, dashboards RED/provider y el provider live siguen pendientes.

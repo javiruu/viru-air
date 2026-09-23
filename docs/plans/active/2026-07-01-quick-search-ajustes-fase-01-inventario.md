@@ -57,7 +57,7 @@ Crear una base de verdad antes de tocar la pantalla `/quick-search`. Esta fase n
 
 - Unitarios cercanos: `quick-search-form-contract`, `quick-search-visible-results`, `quick-search-screen-state`, `quick-search-copy`, `quick-search-request-signatures`, `quick-search-filter-utils`, `quick-search-recent-airports`.
 - E2E/visual cercanos: `quick-search-relax-preview.e2e.test.ts`, `quick-search-airport-picker.e2e.test.ts`, `quick-search-network-guards.e2e.test.ts`, `qa_quick_search_visual.mjs`.
-- QA documental previa: `docs/qa/reports/2026-06-05-watchlist-quick-search-stabilization.md`.
+- QA documental previa: `docs/archive/qa-reports/2026-06-05-watchlist-quick-search-stabilization.md` (histórico).
 
 ## Riesgos
 
@@ -71,12 +71,12 @@ Crear una base de verdad antes de tocar la pantalla `/quick-search`. Esta fase n
 - `git fetch origin --prune`: correcto; `HEAD...origin/main` estaba `0/0`.
 - Lectura completa del plan de 20 fases: completada.
 - Inspeccion de componentes y estado con CodeGraph/rg: completada.
-- `npm run lint`: correcto con warning preexistente en `QuickSearchView.tsx` por dependencias de `useEffect` en la linea 3078.
+- `npm run lint` (en `frontend/`): correcto con warning preexistente en `QuickSearchView.tsx` por dependencias de `useEffect` en la linea 3078.
 - `npx tsc --noEmit`: correcto.
 - `npm run test -- tests/quick-search-visible-results.test.ts tests/quick-search-screen-state.test.tsx tests/quick-search-form-contract.test.ts tests/quick-search-request-signatures.test.ts tests/quick-search-recent-airports.test.ts`: 28 tests pasan.
 - `npm run build`: correcto; mantiene el mismo warning de lint de `QuickSearchView.tsx`.
 - `npm run qa:visual:quick-search`: genero baseline light en `docs/qa/`, pero salio con `panel-dom-missing` en todos los viewports porque el script espera un selector `qs-filter-risk` que ya no existe en el drawer actual.
-- Capturas baseline light generadas por script:
+- Capturas baseline light generadas por script (purgadas el 2026-09-23; regenerables con `npm run qa:visual:quick-search` en `frontend/`):
   - `docs/qa/snapshots_quick-search-desktop1440.png`
   - `docs/qa/snapshots_quick-search-mobile360.png`
   - `docs/qa/snapshots_quick-search-mobile390.png`

@@ -225,7 +225,7 @@ Rules:
   - `results_count`
 - `legacy`: compatibility payload derived for older consumers.
 
-Warnings canónicos esperados en `meta.warnings_structured`:
+Warnings canï¿½nicos esperados en `meta.warnings_structured`:
 
 - `provider_error_partial`
 - `provider_circuit_open_partial`
@@ -564,8 +564,8 @@ Country scope request (mixed or both sides):
   - `count`
   - `source`
 
-`execution.max_pairs` is applied to base O×D planned pairs (after filtering and priority ordering).
-`execution.max_requests` limits provider request units (O×D×date).
+`execution.max_pairs` is applied to base Oï¿½D planned pairs (after filtering and priority ordering).
+`execution.max_requests` limits provider request units (Oï¿½Dï¿½date).
 `execution.timeout_ms` is applied per provider request.
 `execution.concurrency_limit` controls max parallel provider calls.
 
@@ -598,8 +598,8 @@ Defensive client note:
 
 - Request accepts the observed route/date fields plus `price_total`, optional `currency`, optional freshness fields (`freshness_status`, `requires_revalidation`, `validation_status`), optional exact `legs` for operational tracking and optional `fare_profile` for the user's comparable-price basket.
 - `fare_profile` contains `travelers` (`1..9`), `flight_count` (`1..8`), optional normalized `airline_id` (`ryanair`, `vueling`, `wizzair`, `easyjet`) and at most one entry per supported extra: `cabin_bag_10kg`, `checked_bag_20kg`, `insurance`, `fast_track`, `priority_boarding`, `seat_selection` and `flexible_ticket`. Each entry only persists `kind` and `selected`; users do not provide prices.
-- The frontend estimates each selected basket from public airline ranges and preserves the billing unit published by the airline. The formula is `base fare + travelers × sum(unique matched ancillary range × billing units)`, where per-flight services use `flight_count` and per-booking services use one unit. Bundle offers are counted once even when they cover several selections: Ryanair `Priority & 2 Cabin Bags` and `WIZZ Priority` cover both `cabin_bag_10kg` and `priority_boarding`.
-- Current public catalog, reviewed on 2026-07-28: Ryanair cabin+priority EUR 6–36, 20 kg EUR 18.99–59.99 and seat EUR 4.50–33 per flight; Vueling cabin 10 kg EUR 10–59, 20 kg EUR 14–96 and standard seat EUR 5–30 per flight, plus Flex Pack EUR 10–50 per passenger and booking; WIZZ Priority EUR 10–60 per flight. Vueling publishes Travel Protection from EUR 4.99 without a calculable billing unit, so Viru leaves insurance explicit but unpriced instead of assuming one. Sources are linked from each rendered estimate.
+- The frontend estimates each selected basket from public airline ranges and preserves the billing unit published by the airline. The formula is `base fare + travelers ï¿½ sum(unique matched ancillary range ï¿½ billing units)`, where per-flight services use `flight_count` and per-booking services use one unit. Bundle offers are counted once even when they cover several selections: Ryanair `Priority & 2 Cabin Bags` and `WIZZ Priority` cover both `cabin_bag_10kg` and `priority_boarding`.
+- Current public catalog, reviewed on 2026-07-28: Ryanair cabin+priority EUR 6ï¿½36, 20 kg EUR 18.99ï¿½59.99 and seat EUR 4.50ï¿½33 per flight; Vueling cabin 10 kg EUR 10ï¿½59, 20 kg EUR 14ï¿½96 and standard seat EUR 5ï¿½30 per flight, plus Flex Pack EUR 10ï¿½50 per passenger and booking; WIZZ Priority EUR 10ï¿½60 per flight. Vueling publishes Travel Protection from EUR 4.99 without a calculable billing unit, so Viru leaves insurance explicit but unpriced instead of assuming one. Sources are linked from each rendered estimate.
 - These are estimates, not provider quotes. When the airline publishes only a minimum, Viru shows `Desde`; when no calculable public tariff exists (for example, airport-dependent Fast Track), Viru names the unpriced extra and does not invent a value. The persisted profile never changes the canonical observed `PriceSnapshot`.
 - The profile is returned by Watchlist list/detail responses and can be updated through `PUT /api/v1/watchlist/{watch_id}` together with the current `status`.
 - When `legs` is present, it transactionally replaces the Watch's ordered exact-flight identity (maximum 8). When omitted, an existing identity is preserved so older clients and price-only saves remain compatible.
@@ -649,28 +649,28 @@ When duplicates compete, the winner is selected by:
 | `include_stops`, `max_stops` | unsupported (legacy_partial) | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider data not reliable in quick mode |
 | `duration_max_min` | unsupported | n/a | warning `strict_filter_not_enforceable` | warning `degraded_filter_application` | provider missing duration field |
 
-## Shared cache (V2.1 — persistent cross-user cache)
+## Shared cache (V2.1 ï¿½ persistent cross-user cache)
 
 > **V2.1** (Junio 2026) introduce cache compartida persistente en BD como fuente de verdad.
 
-### Semántica de cache compartida
+### Semï¿½ntica de cache compartida
 
 La cache compartida opera sobre **unidades exactas** `(origin_iata, destination_iata, travel_date, provider)`, NO sobre el payload completo de la respuesta final al usuario.
 
-**Diferencias clave entre los tres conceptos de reutilización:**
+**Diferencias clave entre los tres conceptos de reutilizaciï¿½n:**
 
 | Concepto | Clave | Alcance | Persistencia | Usuarios |
 |---|---|---|---|---|
 | **Unidad exacta cacheable** (`unit_cache_key`) | `(origin, destination, date, provider)` | Resultado crudo de un provider para una ruta-fecha concreta | 24h (ready), 2h (empty), 30min (degraded) | Cross-user (sin identidad de usuario) |
-| **Respuesta final recompuesta** | `query_signature` (qsig_*) | Payload completo del endpoint tras ranking, dedupe y paginación | No se cachea como payload bruto canónico | N/A (se recompone desde unidades) |
-| **Snapshots de watchlist** | `(watch_id, captured_at_utc)` | Precio canónico para un watch concreto | Indefinida (histórico) | Single-user (asociado a FlightWatch) |
+| **Respuesta final recompuesta** | `query_signature` (qsig_*) | Payload completo del endpoint tras ranking, dedupe y paginaciï¿½n | No se cachea como payload bruto canï¿½nico | N/A (se recompone desde unidades) |
+| **Snapshots de watchlist** | `(watch_id, captured_at_utc)` | Precio canï¿½nico para un watch concreto | Indefinida (histï¿½rico) | Single-user (asociado a FlightWatch) |
 
-### TTL por categoría de resultado
+### TTL por categorï¿½a de resultado
 
-- `ready`: **24h** (86400s) — resultados con vuelos válidos
-- `empty`: **2h** (7200s) — búsqueda sin vuelos encontrados
-- `degraded`: **30min** (1800s) — resultados parciales o con errores de provider
-- `pending`: **60s** (timeout de trabajo) — unidad en progreso por otra request concurrente
+- `ready`: **24h** (86400s) ï¿½ resultados con vuelos vï¿½lidos
+- `empty`: **2h** (7200s) ï¿½ bï¿½squeda sin vuelos encontrados
+- `degraded`: **30min** (1800s) ï¿½ resultados parciales o con errores de provider
+- `pending`: **60s** (timeout de trabajo) ï¿½ unidad en progreso por otra request concurrente
 
 ### Cache key canonicalization
 
@@ -681,34 +681,34 @@ La cache compartida opera sobre **unidades exactas** `(origin_iata, destination_
 
 La **cache compartida es cross-user pero NO almacena identidad de usuario**. La tabla `quick_search_cache_entry` no tiene FK a `users`.
 
-### Reutilización para búsquedas ampliadas
+### Reutilizaciï¿½n para bï¿½squedas ampliadas
 
-Cuando una búsqueda usa `include_nearby` o `flex`, el backend:
-1. Descompone la búsqueda en unidades exactas `(origin, destination, date, provider)`
+Cuando una bï¿½squeda usa `include_nearby` o `flex`, el backend:
+1. Descompone la bï¿½squeda en unidades exactas `(origin, destination, date, provider)`
 2. Consulta la cache compartida para cada unidad
 3. Solo llama al provider para las unidades no cacheadas o expiradas
-4. Recompone la respuesta final (ranking, dedupe, paginación) desde las unidades resueltas
+4. Recompone la respuesta final (ranking, dedupe, paginaciï¿½n) desde las unidades resueltas
 
 ### Feature flags
 
-- `QUICK_SEARCH_SHARED_CACHE_ENABLED=true` — activa la cache persistente
+- `QUICK_SEARCH_SHARED_CACHE_ENABLED=true` ï¿½ activa la cache persistente
 - `QUICK_SEARCH_SHARED_CACHE_READY_TTL_SECONDS=86400`
 - `QUICK_SEARCH_SHARED_CACHE_EMPTY_TTL_SECONDS=7200`
 - `QUICK_SEARCH_SHARED_CACHE_DEGRADED_TTL_SECONDS=1800`
 - `QUICK_SEARCH_NEGATIVE_CACHE_TTL_SECONDS=1800`
 - `QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_TTL_SECONDS=600`
 - `QUICK_SEARCH_NEGATIVE_PROVIDER_ERROR_MAX_TTL_SECONDS=3600`
-- `FARE_MEMORY_ENABLED=true` — master switch para capas Fare Memory sin romper Quick Search
-- `FARE_MEMORY_SEARCH_CACHE_ENABLED=true` — activa cache exacta por `search_fingerprint`
-- `FARE_MEMORY_OFFER_CACHE_ENABLED=true` — activa persistencia de observaciones por oferta
-- `FARE_MEMORY_NEGATIVE_CACHE_ENABLED=true` — activa negative cache persistente
-- `FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED=false` — activa backfill histórico al crear/guardar watches
+- `FARE_MEMORY_ENABLED=true` ï¿½ master switch para capas Fare Memory sin romper Quick Search
+- `FARE_MEMORY_SEARCH_CACHE_ENABLED=true` ï¿½ activa cache exacta por `search_fingerprint`
+- `FARE_MEMORY_OFFER_CACHE_ENABLED=true` ï¿½ activa persistencia de observaciones por oferta
+- `FARE_MEMORY_NEGATIVE_CACHE_ENABLED=true` ï¿½ activa negative cache persistente
+- `FARE_MEMORY_WATCHLIST_BACKFILL_ENABLED=false` ï¿½ activa backfill histï¿½rico al crear/guardar watches
 - `FARE_MEMORY_BOOT_WARMUP_ENABLED=false`
 - `FARE_MEMORY_MAX_BOOT_JOBS=25`
 - `FARE_MEMORY_PROVIDER_RATE_LIMIT_PER_MINUTE=60`
-- `REDIS_URL` — opcional; si está configurada y operativa, habilita Redis como hot layer compartida
-- `QUICK_SEARCH_REDIS_TTL_SECONDS=300` — TTL máximo de la hot layer Redis
-- `QUICK_SEARCH_REDIS_MAX_PAYLOAD_BYTES=65536` — límite por payload Redis; si se supera, se omite solo la hot layer y DB sigue siendo fuente durable
+- `REDIS_URL` ï¿½ opcional; si estï¿½ configurada y operativa, habilita Redis como hot layer compartida
+- `QUICK_SEARCH_REDIS_TTL_SECONDS=300` ï¿½ TTL mï¿½ximo de la hot layer Redis
+- `QUICK_SEARCH_REDIS_MAX_PAYLOAD_BYTES=65536` ï¿½ lï¿½mite por payload Redis; si se supera, se omite solo la hot layer y DB sigue siendo fuente durable
 
 Con el flag `QUICK_SEARCH_SHARED_CACHE_ENABLED=false`, el sistema usa exclusivamente la cache en memoria actual (TTL 300s) sin tocar la tabla persistente.
 
@@ -719,40 +719,40 @@ Contadores expuestos en `meta.pipeline_counters`:
 - `l1_cache_hits` / `l2_cache_hits` / `negative_cache_hits`: desglose por capa/tipo
 - `cache_hit_rate` / `cache_miss_rate` / `negative_cache_hit_rate`: tasas derivadas por request
 - `provider_calls_avoided`: igual a `cache_hits`; mide unidades resueltas por L1/L2/negative cache o exact-search cache sin llamar al provider
-- `stale_served_count`: resultados devueltos con `stale_data=true`, `requires_revalidation=true` o `freshness.status` cálido/caducado
+- `stale_served_count`: resultados devueltos con `stale_data=true`, `requires_revalidation=true` o `freshness.status` cï¿½lido/caducado
 - `avg_price_age_seconds`: antiguedad media de precios devueltos en la pagina actual, calculada desde `results[].freshness.age_seconds`
 - `provider_error_rate`: ratio de fallos/timeouts sobre llamadas reales o fallos agregados de provider
 
-Interpretación operativa:
+Interpretaciï¿½n operativa:
 
-- Primera búsqueda live sin cache: `provider_calls=1`, `cache_misses=1`, `provider_calls_avoided=0`.
-- Repetición con hit L1/L2: `provider_calls=0`, `cache_hits=1`, `provider_calls_avoided=1`.
+- Primera bï¿½squeda live sin cache: `provider_calls=1`, `cache_misses=1`, `provider_calls_avoided=0`.
+- Repeticiï¿½n con hit L1/L2: `provider_calls=0`, `cache_hits=1`, `provider_calls_avoided=1`.
 - Ruta servida desde negative cache: `negative_cache_hits=1`, `provider_calls=0`, `provider_calls_avoided=1`.
 
 ### Siguiente paso: Redis como hot layer
 
-La arquitectura está diseñada para que Redis pueda añadirse como capa L1 (caliente) sin cambiar la fuente de verdad (BD). La cache en BD seguiría siendo el contrato canónico; Redis sería una aceleración con TTL más corto.
+La arquitectura estï¿½ diseï¿½ada para que Redis pueda aï¿½adirse como capa L1 (caliente) sin cambiar la fuente de verdad (BD). La cache en BD seguirï¿½a siendo el contrato canï¿½nico; Redis serï¿½a una aceleraciï¿½n con TTL mï¿½s corto.
 
 ## Implementation status (Junio 2026)
 
-La cache compartida persistente (V2.1) está implementada con las siguientes piezas:
+La cache compartida persistente (V2.1) estï¿½ implementada con las siguientes piezas:
 
 | Componente | Archivo | Estado |
 |---|---|---|
 | Modelo DB | `backend/app/infrastructure/db/models.py` ? `QuickSearchCacheEntry` | ? vivo |
-| Migración | `backend/alembic/versions/0030_add_quick_search_shared_cache.py` | ? aplicada |
+| Esquema | `backend/app/infrastructure/db/models.py` (tabla `quick_search_cache_entry`, aplicada con `create_all` â€” sin Alembic, ADR 0003) | ? vivo |
 | Servicio de cache | `backend/app/services/quick_search_cache_service.py` | ? vivo |
-| Canonicalización | `backend/app/services/quick_search_execution.py` ? `build_unit_cache_key`, `build_cache_source_hash`, `classify_cache_result` | ? vivo |
-| Integración execution | `backend/app/services/quick_search_execution.py` ? `execute_plan` + `_fetch_with_cache` (L1?L2?provider) | ? vivo |
+| Canonicalizaciï¿½n | `backend/app/services/quick_search_execution.py` ? `build_unit_cache_key`, `build_cache_source_hash`, `classify_cache_result` | ? vivo |
+| Integraciï¿½n execution | `backend/app/services/quick_search_execution.py` ? `execute_plan` + `_fetch_with_cache` (L1?L2?provider) | ? vivo |
 | Anti-stampede | `backend/app/services/quick_search_execution.py` ? per-key `threading.Lock` en `_fetch_with_cache` | ? vivo |
-| Integración watchlist | `backend/app/api/v1/watchlist.py` ? `_refresh_watch_now` consulta y persiste cache | ? vivo |
+| Integraciï¿½n watchlist | `backend/app/api/v1/watchlist.py` ? `_refresh_watch_now` consulta y persiste cache | ? vivo |
 | Wiring endpoint | `backend/app/api/v1/search.py` ? callables `shared_cache_get/set` + pruning | ? vivo |
 | Feature flags | `backend/.env.example` ? 5 env vars `QUICK_SEARCH_SHARED_CACHE_*` | ? vivo |
 | Observabilidad | `pipeline_counters.l1_cache_hits`, `pipeline_counters.l2_cache_hits`, `provider_calls` en logs | ? vivo |
 | Limpieza | `prune_expired_entries` llamado en ~10% de requests | ? vivo |
 | Tests | `backend/tests/unit/test_quick_search_cache_models.py` (17 tests), `test_quick_search_shared_cache.py` (12 tests) | ? vivo |
 
-### Activación
+### Activaciï¿½n
 
 ```bash
 QUICK_SEARCH_SHARED_CACHE_ENABLED=true
@@ -762,7 +762,7 @@ Con el flag en `false`, el sistema usa exclusivamente la cache en memoria actual
 
 ### Siguiente paso: Redis como hot layer
 
-La arquitectura está diseñada para añadir Redis como capa L1 (caliente) sin cambiar la fuente de verdad (BD). La cache en BD sigue siendo el contrato canónico; Redis sería una aceleración con TTL más corto.
+La arquitectura estï¿½ diseï¿½ada para aï¿½adir Redis como capa L1 (caliente) sin cambiar la fuente de verdad (BD). La cache en BD sigue siendo el contrato canï¿½nico; Redis serï¿½a una aceleraciï¿½n con TTL mï¿½s corto.
 
 ## Observability and debug
 - Every search emits `meta.query_trace_id`.
@@ -780,17 +780,17 @@ La arquitectura está diseñada para añadir Redis como capa L1 (caliente) sin camb
 
 ## Popularidad comunitaria derivada
 
-Cada búsqueda válida mantiene dos señales anónimas:
+Cada bï¿½squeda vï¿½lida mantiene dos seï¿½ales anï¿½nimas:
 
-- `quick_search_popularity_counter`: acumulado histórico por ruta, fecha de viaje y moneda;
-- `quick_search_popularity_daily`: bucket por fecha de búsqueda, ruta direccional y moneda.
+- `quick_search_popularity_counter`: acumulado histï¿½rico por ruta, fecha de viaje y moneda;
+- `quick_search_popularity_daily`: bucket por fecha de bï¿½squeda, ruta direccional y moneda.
 
-El segundo permite calcular una ventana real de siete días sin reinterpretar
-`last_searched_at` ni atribuir el acumulado histórico a la semana actual. La
+El segundo permite calcular una ventana real de siete dï¿½as sin reinterpretar
+`last_searched_at` ni atribuir el acumulado histï¿½rico a la semana actual. La
 respuesta de `POST /api/v1/search/quick` no incorpora estos agregados: Dashboard,
 Quick Search y Watchlist los solicitan mediante los endpoints ligeros
-`/api/v1/community/routes/*`, por lo que una degradación comunitaria no bloquea
-la búsqueda principal.
+`/api/v1/community/routes/*`, por lo que una degradaciï¿½n comunitaria no bloquea
+la bï¿½squeda principal.
 
 
 

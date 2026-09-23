@@ -170,8 +170,8 @@ Checklist de estado:
 
 Evidencia concreta:
 
-1. Migracion de dominio presente: `backend/alembic/versions/0017_hotels_domain_skeleton.py`.
-2. Migracion de sweeps/alert events presente: `backend/alembic/versions/0018_hotels_provider_run_and_alert_event.py`.
+1. Modelos de dominio presentes en `backend/app/infrastructure/db/models.py` (aplicados con `create_all`; sin Alembic, ADR 0003).
+2. Modelos de sweeps/alert events presentes en `models.py` (`HotelProviderRun`, `HotelAlertEvent`).
 3. Siete modelos hoteleros presentes en `backend/app/infrastructure/db/models.py`:
    `HotelProperty`, `HotelProviderAlias`, `HotelRateSnapshot`, `HotelWatchlistItem`,
    `HotelCompSet`, `HotelCompSetMember`, `HotelAlertRule`.
@@ -200,7 +200,7 @@ Observaciones pendientes:
 ## 12. Fases post-cierre A-E (2026-06-05)
 
 Tras el cierre de las 10 fases originales, se ejecutaron 5 fases adicionales de correcciones y polish.
-El plan maestro esta en `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md`.
+El plan maestro esta en `docs/archive/plans/2026-06-04-hoteles-correcciones-post-cierre.md`.
 
 1. **Fase A — DELETE comp-set**: Ya existia endpoint y tests (184/184 pasan).
 2. **Fase B — Refactor hooks**: Ya completado. 6 hooks extraidos de HotelRadarPage.

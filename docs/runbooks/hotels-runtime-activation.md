@@ -40,7 +40,7 @@ El Secret debe contener las keys que consumen la API, el CronJob y el Job de mig
 | Key | Uso |
 |---|---|
 | `DB_URL` | conexión a la DB (requerida por el Job de migración, el CronJob y la API) |
-| `JWT_SECRET` | requerida por `backend/app/core/security.py` al importar; min 32 bytes aleatorios |
+| `JWT_SECRET` | fallback local de tests; en Supabase hosted la verificación es ES256/JWKS vía `SUPABASE_URL` (ver `runbook-supabase-native.md`) |
 | `TOKEN_HASH_SECRET` | opcional; si falta, usa `JWT_SECRET` |
 
 Preferido (sin escribir el valor en disco):

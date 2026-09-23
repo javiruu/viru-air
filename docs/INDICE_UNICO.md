@@ -77,7 +77,6 @@
 - [Prompts y contexto IA](prompts/README.md)
 - [Skill Viru Air UI](../.codex/skills/viru-air-ui/SKILL.md)
 - [Inventario documental](DOCS_INVENTORY.md)
-- [HISTORY.md](../HISTORY.md)
 
 ## Por área
 
@@ -123,8 +122,8 @@
 ### Plans
 
 - [Planes de trabajo](plans/README.md)
-- [Limpieza masiva y retirada segura de legado](plans/2026-08-13-dead-code-legacy-retirement.md)
-- [Plan maestro de `/hoteles` — tracker hotelero preferido](plans/2026-08-04-hoteles-master-roadmap.md)
+- [Limpieza masiva y retirada segura de legado](archive/plans/2026-08-13-dead-code-legacy-retirement.md)
+- [Plan maestro de `/hoteles` — tracker hotelero preferido](archive/plans/2026-08-04-hoteles-master-roadmap.md)
 - [Visión de producto H01 de `/hoteles`](product/hoteles-product-vision-h01.md)
 - [Benchmark H02 de Travel Price Drops Hotels](benchmarks/2026-08-04-travelpricedrops-hotels-h02.md)
 - [Arquitectura de información H03 de `/hoteles`](product/hoteles-information-architecture-h03.md)
@@ -188,7 +187,7 @@
 - [Plan progresivo de 20 fases — Quick Search + Ajustes activos](plans/active/2026-07-01-plan-20-fases-quick-search-ajustes.md)
 - [Quick Search ajustes — Fase 1 inventario](plans/active/2026-07-01-quick-search-ajustes-fase-01-inventario.md)
 - [Live flight tracking a partir de Watchlist (completado)](archive/plans/2026-07-21-live-flight-tracking-watchlist.md)
-- [Auditoria cache Fare Memory F21](plans/2026-06-14-fare-memory-cache-audit.md)
+- [Auditoria cache Fare Memory F21](archive/plans/2026-06-14-fare-memory-cache-audit.md)
 
 ### ADRs
 
@@ -202,10 +201,8 @@
 ### Specs
 
 - [Specs activas](specs/README.md)
-- [Phase 1 Codex MVP](specs/phase1-codex.md)
 - [Hotels Intelligence MVP](specs/hotels-intelligence-mvp.md)
 - [Viru Fare Memory](specs/viru-fare-memory.md)
-- [Hoteles post-cierre Fases A-E](plans/2026-06-04-hoteles-correcciones-post-cierre.md)
 
 ### QA
 

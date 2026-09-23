@@ -69,8 +69,8 @@ Producto, UI, QA y contratos:
 - `docs/qa/reports/2026-06-05-watchlist-quick-search-stabilization.md`
 - `docs/runbooks/runbook-watchlist-quick-search-stabilization.md`
 - `docs/runbooks/runbook-puerta-a-puerta-qa.md`
-- `docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
-- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `docs/archive/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
+- `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
 
 Codigo inspeccionado de forma selectiva:
 
@@ -404,8 +404,8 @@ que hoy inducen a error.
 
 - `docs/reference/backend/quick-search-contract.md`
 - `docs/reference/backend/quick-search-acceptance-checklist.md`
-- `docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
-- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `docs/archive/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
+- `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
 - `docs/specs/hotels-intelligence-mvp.md`
 - `docs/qa/hotels-pending-closeout.md`
 - `docs/DOCS_INVENTORY.md`
@@ -667,8 +667,8 @@ quedaba vivo en 7-10.
 - `docs/product/quick-search.md`
 - `docs/reference/backend/quick-search-contract.md`
 - `docs/reference/backend/quick-search-acceptance-checklist.md`
-- `docs/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
-- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `docs/archive/plans/2026-06-08-quick-search-roundtrip-stabilization.md`
+- `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
 - `frontend/src/modules/quick-search/QuickSearchView.tsx`
 - `frontend/src/modules/quick-search/state/useQuickSearchScreenState.ts`
 - `frontend/src/modules/quick-search/state/useQuickSearchSide.ts`

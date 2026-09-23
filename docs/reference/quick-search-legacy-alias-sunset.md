@@ -35,4 +35,4 @@ Definir cómo retirar aliases legacy de quick search sin romper clientes activos
 
 - `QUICK_SEARCH_LEGACY_ALIASES_MODE=observe` es el modo predeterminado y mantiene la compatibilidad.
 - `QUICK_SEARCH_LEGACY_ALIASES_MODE=block` devuelve `400 quick_search_legacy_aliases_blocked`; está reservado para desarrollo y canary antes de retirar producción.
-- La guía completa de inventario, evidencia y retirada de datos hoteleros está en [Limpieza masiva y retirada segura de legado](../plans/2026-08-13-dead-code-legacy-retirement.md).
+- La guía completa de inventario, evidencia y retirada de datos hoteleros está en [Limpieza masiva y retirada segura de legado](../archive/plans/2026-08-13-dead-code-legacy-retirement.md).

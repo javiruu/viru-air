@@ -23,7 +23,7 @@ Motivo:
 
 Entrada viva agregada:
 
-- `docs/plans/2026-08-27-purchased-watch-daily-tracking.md`
+- `docs/archive/plans/2026-08-27-purchased-watch-daily-tracking.md`
 
 Motivo:
 
@@ -43,7 +43,7 @@ Motivo:
 
 Entrada viva agregada:
 
-- `docs/plans/2026-08-13-dead-code-legacy-retirement.md`
+- `docs/archive/plans/2026-08-13-dead-code-legacy-retirement.md`
 
 Motivo:
 
@@ -53,26 +53,26 @@ Motivo:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-08-08-h36-performance-baseline.md`
-- `docs/plans/2026-08-08-hoteles-detail-intent-design.md`
-- `docs/plans/2026-08-08-hoteles-detail-intent-implementation.md`
-- `docs/plans/2026-08-09-hotel-demo-seed-plan.md`
-- `docs/plans/2026-08-09-hotel-mock-canary-design.md`
-- `docs/plans/2026-08-09-hotel-mock-canary-plan.md`
-- `docs/plans/2026-08-09-hotel-provider-latency-contract-plan.md`
-- `docs/plans/2026-08-09-hotel-provider-latency-persistence-design.md`
-- `docs/plans/2026-08-09-hotel-provider-latency-persistence-plan.md`
-- `docs/plans/2026-08-09-hoteles-delivery-design.md`
-- `docs/plans/2026-08-09-hoteles-delivery-implementation.md`
-- `docs/plans/2026-08-09-hoteles-observability-dashboard-plan.md`
-- `docs/plans/2026-08-09-hoteles-observability-metrics-design.md`
-- `docs/plans/2026-08-10-h44-fault-matrix-dry-run-design.md`
-- `docs/plans/2026-08-10-h44-fault-matrix-dry-run-plan.md`
-- `docs/plans/2026-08-10-h44-revalidation-fault-profiles-plan.md`
-- `docs/plans/2026-08-10-h48-saved-hotel-searches.md`
-- `docs/plans/2026-08-10-hoteles-auditoria-checklist-completa.md`
-- `docs/plans/2026-08-10-hoteles-local-backlog-closeout-plan.md`
-- `docs/plans/2026-08-10-hotels-local-closeout-implementation.md`
+- `docs/archive/plans/2026-08-08-h36-performance-baseline.md`
+- `docs/archive/plans/2026-08-08-hoteles-detail-intent-design.md`
+- `docs/archive/plans/2026-08-08-hoteles-detail-intent-implementation.md`
+- `docs/archive/plans/2026-08-09-hotel-demo-seed-plan.md`
+- `docs/archive/plans/2026-08-09-hotel-mock-canary-design.md`
+- `docs/archive/plans/2026-08-09-hotel-mock-canary-plan.md`
+- `docs/archive/plans/2026-08-09-hotel-provider-latency-contract-plan.md`
+- `docs/archive/plans/2026-08-09-hotel-provider-latency-persistence-design.md`
+- `docs/archive/plans/2026-08-09-hotel-provider-latency-persistence-plan.md`
+- `docs/archive/plans/2026-08-09-hoteles-delivery-design.md`
+- `docs/archive/plans/2026-08-09-hoteles-delivery-implementation.md`
+- `docs/archive/plans/2026-08-09-hoteles-observability-dashboard-plan.md`
+- `docs/archive/plans/2026-08-09-hoteles-observability-metrics-design.md`
+- `docs/archive/plans/2026-08-10-h44-fault-matrix-dry-run-design.md`
+- `docs/archive/plans/2026-08-10-h44-fault-matrix-dry-run-plan.md`
+- `docs/archive/plans/2026-08-10-h44-revalidation-fault-profiles-plan.md`
+- `docs/archive/plans/2026-08-10-h48-saved-hotel-searches.md`
+- `docs/archive/plans/2026-08-10-hoteles-auditoria-checklist-completa.md`
+- `docs/archive/plans/2026-08-10-hoteles-local-backlog-closeout-plan.md`
+- `docs/archive/plans/2026-08-10-hotels-local-closeout-implementation.md`
 
 Motivo:
 
@@ -99,7 +99,7 @@ Motivo:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 
 Motivo:
 
@@ -113,7 +113,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -130,7 +130,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -147,7 +147,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -164,7 +164,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -181,7 +181,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -198,7 +198,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -215,7 +215,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -232,7 +232,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -249,7 +249,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -266,7 +266,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -283,7 +283,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -296,7 +296,7 @@ Motivo:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-08-04-community-trending-persistence-inbox.md`
+- `docs/archive/plans/2026-08-04-community-trending-persistence-inbox.md`
 
 Motivo:
 
@@ -332,6 +332,11 @@ Entradas eliminadas por duplicidad tras migrar sus reglas únicas a `DESIGN.md`:
 - `.codex/skills/viru-air-ui/references/qa-checklist.md`
 
 ## Registro histórico de actualizaciones anteriores
+
+> **Nota (2026-09-23):** las rutas de documentos de UI y skills de diseño listadas en los registros
+> históricos de abajo (`docs/ui/*`, `.codex/skills/viru-air-ui/references/*`, `docs/archive/qa-visual/*`,
+> `docs/archive/qa-screenshots/*`) fueron consolidadas en `DESIGN.md` o purgadas con aprobación del
+> usuario. Las entradas de este registro se conservan tal cual como histórico; los archivos ya no existen.
 
 Los bloques que siguen registran el estado en la fecha indicada. La expresión “entradas vivas” describe ese momento histórico, no el inventario actual; para la vigencia se usa la tabla de inventario y la fuente de verdad declarada arriba.
 
@@ -436,7 +441,7 @@ Entradas vivas agregadas:
 Entradas vivas agregadas:
 
 - `docs/specs/viru-fare-memory.md`
-- `docs/plans/2026-06-14-fare-memory-cache-audit.md`
+- `docs/archive/plans/2026-06-14-fare-memory-cache-audit.md`
 
 Entradas vivas actualizadas:
 
@@ -581,9 +586,7 @@ Entradas vivas agregadas:
 
 Entradas vivas agregadas:
 
-- `docs/specs/phase1-codex.md`
 - `docs/reference/quick-search-legacy-alias-sunset.md`
-- `skills/phase1-mvp/SKILL.md`
 - `docs/archive/qa-reports/2026-05-12-fase1-cumplimiento.md`
 - `backend/tests/unit/test_airports_endpoints.py`
 
@@ -735,7 +738,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md`
+- `docs/archive/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md`
 
 Entradas vivas actualizadas:
 
@@ -746,7 +749,7 @@ Entradas vivas actualizadas:
 Entradas vivas agregadas:
 
 - `docs/runbooks/runbook-activation-profiles.md`
-- `docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md`
+- `docs/archive/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md`
 
 Entradas vivas actualizadas:
 
@@ -759,7 +762,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md`
+- `docs/archive/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md`
 
 Entradas vivas actualizadas:
 
@@ -769,7 +772,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md`
+- `docs/archive/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md`
 
 Entradas vivas actualizadas:
 
@@ -779,7 +782,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-10-sticky-navbar-scroll-state-rollout.md`
+- `docs/archive/plans/2026-06-10-sticky-navbar-scroll-state-rollout.md`
 
 Entradas vivas actualizadas:
 
@@ -789,7 +792,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-10-quick-search-shared-cache-implementation.md`
+- `docs/archive/plans/2026-06-10-quick-search-shared-cache-implementation.md`
 
 Entradas vivas actualizadas:
 
@@ -799,7 +802,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-10-redis-hot-layer-plan.md`
+- `docs/archive/plans/2026-06-10-redis-hot-layer-plan.md`
 
 Entradas vivas actualizadas:
 
@@ -810,7 +813,7 @@ Entradas vivas actualizadas:
 Entradas vivas agregadas:
 
 - `backend/app/services/quick_search_cache_service.py`
-- `backend/alembic/versions/0030_add_quick_search_shared_cache.py`
+- `backend/app/infrastructure/db/models.py` (create_all, sin Alembic)
 - `backend/tests/unit/test_quick_search_cache_models.py`
 - `backend/tests/unit/test_quick_search_shared_cache.py`
 
@@ -829,7 +832,7 @@ Entradas vivas actualizadas:
 
 Entradas vivas agregadas:
 
-- `docs/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
+- `docs/archive/plans/2026-06-10-quick-search-shared-cache-review-plan.md`
 
 Entradas vivas actualizadas:
 
@@ -854,7 +857,7 @@ Entradas vivas agregadas:
 
 - `HISTORY.md`
 - `docs/archive/plans/cabinalimpia.txt`
-- `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md`
+- `docs/archive/plans/2026-06-04-hoteles-correcciones-post-cierre.md`
 
 Entradas vivas actualizadas:
 
@@ -882,7 +885,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -899,7 +902,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -916,7 +919,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -933,7 +936,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -950,7 +953,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -967,7 +970,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -984,7 +987,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -1001,7 +1004,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -1018,7 +1021,7 @@ Entradas vivas agregadas:
 
 Entradas vivas actualizadas:
 
-- `docs/plans/2026-08-04-hoteles-master-roadmap.md`
+- `docs/archive/plans/2026-08-04-hoteles-master-roadmap.md`
 - `docs/plans/README.md`
 - `docs/INDICE_UNICO.md`
 - `docs/DOCS_INVENTORY.md`
@@ -1059,9 +1062,6 @@ Motivo:
 | docs/overview/project-overview.md | overview | vivo | conservar | docs/overview/project-overview.md | Onboarding y mapa vivo del proyecto con direccion de producto clara y cercana | docs/overview/project-overview.md |
 | docs/overview/repo-map.md | overview | vivo | conservar | docs/overview/repo-map.md | Onboarding y mapa vivo del proyecto | docs/overview/repo-map.md |
 | docs/plans/README.md | plan | vivo | conservar | docs/plans/README.md | Gu?a de organizaci?n de planes | docs/plans/README.md |
-| docs/plans/2026-08-01-community-route-intelligence.md | plan | vivo | conservar | docs/plans/2026-08-01-community-route-intelligence.md | Plan full-stack para popularidad semanal, precios, tendencias, rutas relacionadas e historial comunitario | docs/plans/2026-08-01-community-route-intelligence-design.md |
-| docs/plans/2026-08-01-community-route-intelligence-design.md | plan | vivo | conservar | docs/plans/2026-08-01-community-route-intelligence-design.md | Diseño aprobado de inteligencia comunitaria de rutas y variante Lazyweb Corredores más buscados | docs/plans/2026-08-01-community-route-intelligence.md |
-| docs/plans/2026-08-04-hoteles-master-roadmap.md | plan | vivo | conservar | docs/plans/2026-08-04-hoteles-master-roadmap.md | Plan maestro por fases para convertir `/hoteles` en un tracker hotelero confiable y preferido | conservar como roadmap de ejecución; actualizar estado por fase |
 | docs/qa/reports/2026-08-04-hoteles-h00-baseline.md | QA | vivo | conservar | docs/qa/reports/2026-08-04-hoteles-h00-baseline.md | Baseline reproducible de tests, build, entorno y limitaciones operativas de `/hoteles` | actualizar en nuevos baselines o cambios de gate |
 | docs/product/hoteles-product-vision-h01.md | product | vivo | conservar | docs/product/hoteles-product-vision-h01.md | Visión, personas, jobs, no-objetivos, métricas y guardrails de `/hoteles` | fuente de verdad de dirección de producto |
 | docs/benchmarks/2026-08-04-travelpricedrops-hotels-h02.md | benchmark | vivo | conservar | docs/benchmarks/2026-08-04-travelpricedrops-hotels-h02.md | Benchmark fechado de Travel Price Drops Hotels y traducción de patrones a decisiones Viru | revisar si cambia la referencia o una decisión depende de ella |
@@ -1123,19 +1123,7 @@ Motivo:
 | docs/reference/backend/hoteles-alert-rules-dedupe-h26.md | backend | vivo | conservar | docs/reference/backend/hoteles-alert-rules-dedupe-h26.md | Contrato H26 de reglas de alerta, baselines elegibles, estados, fingerprints, cooldown, dedupe, ownership, eventos y QA | fuente de verdad de alertas deterministas y deduplicación hotelera H26 |
 | docs/reference/backend/hoteles-private-inbox-deeplinks-h27.md | backend | vivo | conservar | docs/reference/backend/hoteles-private-inbox-deeplinks-h27.md | Contrato H27 de inbox privado hotelero, ownership por origen, read/unread, migración legacy, deep links contextuales, privacidad, seguridad y QA | fuente de verdad de inbox y navegación segura hotelera H27 |
 | docs/reference/backend/hoteles-delivery-retries-preferences-h28.md | backend | vivo | conservar | docs/reference/backend/hoteles-delivery-retries-preferences-h28.md | Contrato H28 de delivery hotelero, canales, consentimiento, quiet hours, retries, backoff, idempotencia, dead letter, privacidad, observabilidad y QA | fuente de verdad de entrega hotelera H28 |
-| docs/plans/2026-08-04-community-trending-persistence-inbox.md | plan | vivo | conservar | docs/plans/2026-08-04-community-trending-persistence-inbox.md | Mega plan implementado y verificado para persistencia diaria de tendencias comunitarias, ownership/read-state del inbox, retención, rollback y verificación | conservar como diseño e historial; contratos y runbooks vivos reflejan el estado operativo |
-| docs/plans/2026-07-30-next-dev-compilation.md | plan | vivo | conservar | docs/plans/2026-07-30-next-dev-compilation.md | Plan de implementación para Turbopack y calentamiento controlado de rutas estáticas | docs/plans/2026-07-30-next-dev-compilation.md |
-| docs/plans/2026-07-30-next-dev-compilation-design.md | plan | vivo | conservar | docs/plans/2026-07-30-next-dev-compilation-design.md | Diseño aprobado para acelerar Next.js en desarrollo y calentar rutas estáticas en segundo plano | docs/plans/2026-07-30-next-dev-compilation-design.md |
-| docs/plans/2026-07-28-community-pricing-design.md | plan | vivo | conservar | docs/plans/2026-07-28-community-pricing-design.md | Diseño aprobado para recopilar y agregar precios reales por viajero desde Watchlist | docs/plans/2026-07-28-community-pricing-design.md |
-| docs/plans/2026-07-28-community-pricing.md | plan | vivo | conservar | docs/plans/2026-07-28-community-pricing.md | Plan de implementación full-stack de Community Pricing con privacidad por umbral | docs/plans/2026-07-28-community-pricing.md |
 | docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md | plan | archivado | conservar | docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md | Brainstorming, riesgos, arquitectura, fases y QA completados de Live flight tracking desde Watchlist | docs/archive/plans/2026-07-21-live-flight-tracking-watchlist.md |
-| docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | plan | vivo | conservar | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md | Plan de 5 fases (A-E) de correcciones post-cierre para el modulo /hoteles | docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md |
-| docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | plan | vivo | conservar | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md | Plan operativo aterrizado para evolucionar `/puerta-a-puerta` con foco en honestidad, contratos y utilidad incremental real | docs/plans/2026-06-08-puerta-a-puerta-plan-aterrizado-real.md |
-| docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de 10 fases adicionales para expandir cobertura, pricing real, orquestación avanzada y rollout por mercados | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
-| docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md | Plan de 10 fases centrado en activar capacidades reales de `/puerta-a-puerta` por valor, dependencias y cobertura util | docs/plans/2026-06-09-puerta-a-puerta-plan-10-fases-activacion-real.md |
-| docs/plans/2026-06-10-quick-search-shared-cache-implementation.md | plan | vivo | conservar | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md | Plan de implementacion en 15 fases para una cache compartida, persistente y cross-user de quick-search con recomposicion por unidades exactas | docs/plans/2026-06-10-quick-search-shared-cache-implementation.md |
-| docs/plans/2026-06-10-redis-hot-layer-plan.md | plan | vivo | conservar | docs/plans/2026-06-10-redis-hot-layer-plan.md | Plan de diseno en 7 fases para anadir Redis como hot layer opcional sobre la cache persistente DB sin cambiar el contrato actual | docs/plans/2026-06-10-redis-hot-layer-plan.md |
-| docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | plan | vivo | conservar | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md | Roadmap de las siguientes 10 fases para expandir la activacion real del modulo tras el checkpoint actual | docs/plans/2026-06-09-puerta-a-puerta-siguientes-10-fases.md |
 | docs/product/dashboard.md | product | vivo | conservar | docs/product/dashboard.md | Resumen funcional vivo por ?rea de producto | docs/product/dashboard.md |
 | docs/product/policies-page.md | product | vivo | conservar | docs/product/policies-page.md | Resumen funcional vivo por ?rea de producto | docs/product/policies-page.md |
 | docs/product/quick-search.md | product | vivo | conservar | docs/product/quick-search.md | Resumen funcional vivo por ?rea de producto | docs/product/quick-search.md |
@@ -1165,7 +1153,6 @@ Motivo:
 | docs/reference/final-report-template.md | overview | vivo | conservar | docs/reference/final-report-template.md | Referencia t?cnica o de proceso activa | docs/reference/final-report-template.md |
 | docs/reference/quick-search-weather-policy.md | product | vivo | conservar | docs/reference/quick-search-weather-policy.md | Pol?tica funcional activa de quick search | docs/reference/quick-search-weather-policy.md |
 | docs/reference/ui-visible-language-guide.md | reference | vivo | conservar | docs/reference/ui-visible-language-guide.md | Guia canonica para humanizar lenguaje visible sin tocar labels de producto, contratos ni nombres internos | docs/reference/ui-visible-language-guide.md |
-| docs/archive/reports/docs-sanitize-audit.md | historical | hist?rico | conservar | docs/archive/reports/docs-sanitize-audit.md | Reporte de auditor?a y saneamiento documental | docs/reports/docs-sanitize-audit.md |
 | docs/runbooks/runbook-activation-profiles.md | runbook | vivo | conservar | docs/runbooks/runbook-activation-profiles.md | Perfiles canónicos de activación por entorno (local_demo, local_real, staging_safe, prod_gradual) con matriz de flags y blindaje anti-mock | docs/runbooks/runbook-activation-profiles.md |
 | docs/runbooks/runbook-canary-rollback.md | runbook | vivo | conservar | docs/runbooks/runbook-canary-rollback.md | Runbook operativo activo | docs/runbooks/runbook-canary-rollback.md |
 | docs/runbooks/runbook-db-retention.md | runbook | vivo | conservar | docs/runbooks/runbook-db-retention.md | Runbook operativo activo | docs/runbooks/runbook-db-retention.md |
@@ -1210,11 +1197,9 @@ Entradas vivas agregadas:
 
 Entradas vivas agregadas:
 
-- `docs/archive/qa-reports/2026-05-12-release-closure.md`
 
 Entradas vivas actualizadas:
 
-- `docs/archive/qa-reports/2026-05-12-fases-0-3-audit.md`
 - `docs/overview/current-state.md`
 
 ## Actualizacion manual 2026-05-12 (watchlist W0 baseline)

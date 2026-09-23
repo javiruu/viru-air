@@ -19,10 +19,8 @@ Objetivo: evitar empezar desde cero en cada conversacion cuando hay que validar 
   - `frontend/scripts/qa_quick_search_visual.mjs`
   - `frontend/scripts/perf_profile_playwright.cjs`
 - Evidencia previa:
-  - `docs/qa/reports/quick-search-auth-flow-report.json`
-  - `docs/qa/reports/quick-search-auth-verified-report.json`
-  - `docs/qa/reports/quick-search-visual-report.json`
-  - `docs/qa/reports/2026-05-12-watchlist-w0-baseline.md`
+  - `docs/qa/quick-search-visual-report.json` (regenerable con el script qa:visual:quick-search (npm run, en frontend/))
+  - `docs/archive/qa-reports/2026-05-12-watchlist-w0-baseline.md` (histórico; los reportes de auth-flow/verified de ese ciclo se purgaron el 2026-09-23)
 
 ## Flujo operativo minimo recomendado
 

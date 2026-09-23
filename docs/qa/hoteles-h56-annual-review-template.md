@@ -4,7 +4,7 @@
 **Estado del artefacto:** `evidence_incomplete` — plantilla sin resultados rellenados  
 **Tipo:** paquete de evidencia / revisión anual  
 **Fuente de verdad contractual:** [H56 — revisión anual, providers, costes y siguiente roadmap](../reference/backend/hoteles-revision-anual-roadmap-h56.md)  
-**Roadmap:** [Plan maestro de hoteles](../plans/2026-08-04-hoteles-master-roadmap.md)  
+**Roadmap:** [Plan maestro de hoteles](../archive/plans/2026-08-04-hoteles-master-roadmap.md)  
 **Fecha de plantilla:** 2026-08-05  
 
 > Esta plantilla no certifica el estado de producción. Las celdas `TBD`, `unknown`, `not_measured` y `contract_only` deben conservarse hasta obtener evidencia real. No sustituirlas por cero, éxito, cobertura o aprobación.

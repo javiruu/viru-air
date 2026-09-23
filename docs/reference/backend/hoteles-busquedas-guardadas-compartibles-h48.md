@@ -6,7 +6,7 @@
 **Fuente de verdad:** sí para la semántica de búsquedas hoteleras reproducibles, guardadas y compartibles  
 **Fase del roadmap:** H48  
 **Depende de:** [H03 — arquitectura y URL state](../../product/hoteles-information-architecture-h03.md), [H10 — StayQuery](hoteles-stay-offer-model-h10.md), [H13 — formulario y recuperación](hoteles-search-form-h13.md), [H14 — filtros y orden](hoteles-filters-ranking-h14.md), [H15 — resultados](hoteles-results-pagination-h15.md), [H22 — favorito frente a tracking](hoteles-favorite-vs-tracking-h22.md), [H27 — inbox y deep links](hoteles-private-inbox-deeplinks-h27.md), [H29 — lifecycle](hoteles-lifecycle-pause-edit-expire-delete-h29.md), [H34 — i18n](../frontend/hoteles-localization-dates-currency-timezones-h34.md), [H35 — privacidad y deeplinks](hoteles-legal-privacy-disclosure-deeplinks-h35.md), [H40 — browser QA](../frontend/hoteles-visual-manual-crossbrowser-qa-h40.md), [H47 — Mis hoteles](../frontend/hoteles-mis-hoteles-reengagement-h47.md)  
-**Handoff:** [H49 — personalización prudente](../../plans/2026-08-04-hoteles-master-roadmap.md#fase-h49--personalización-prudente)
+**Handoff:** [H49 — personalización prudente](../../archive/plans/2026-08-04-hoteles-master-roadmap.md#fase-h49--personalización-prudente)
 
 > H48 separa una intención de búsqueda que puede compartir cualquiera de una suscripción privada que solo puede gestionar su propietario. Una URL con destino y fechas no es tracking, no es alerta y no concede acceso a datos de cuenta.
 

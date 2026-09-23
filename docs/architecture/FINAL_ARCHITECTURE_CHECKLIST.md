@@ -9,8 +9,8 @@ Estado verificado y reconciliado con evidencia de código y runtime (reconciliac
   - Biome (`frontend/biome.json`): formatter activado y formateo global aplicado sobre los 473 archivos en alcance. `biome check` reporta 0 errores (75 avisos de nivel `warn`, no bloqueantes). `src/api/generated` permanece excluido.
 - [x] **Contrato OpenAPI determinista y exportable:**
   - Exportador reproducible en `backend/scripts/export_openapi.py` (121 paths únicos, 151 operaciones).
-  - `frontend/src/api/generated/` generado mediante Orval (`npm run api:check` pasa sin diff).
-  - *Nota de adopción:* El frontend mantiene sus clientes HTTP nativos (`src/modules/shared/api.ts`); la adopción directa de los clientes generados en pantallas permanece como scaffold desacoplado para evitar roturas de UI.
+  - `frontend/src/api/generated/` generado mediante Orval (el script api:check de frontend/ pasa sin diff).
+  - *Nota de adopción:* El frontend mantiene sus clientes HTTP nativos (modules/shared/api.ts (eliminado, hoy Orval)); la adopción directa de los clientes generados en pantallas permanece como scaffold desacoplado para evitar roturas de UI.
 - [x] **React QueryProvider configurado en RootLayout:**
   - `QueryProvider` activo en `frontend/src/app/layout.tsx` con políticas de cache (`staleTime: 30s`).
   - *Nota de adopción:* Server state en páginas históricas utiliza 243 `useEffect` probados y estables. La migración a `useQuery` será por pantalla a demanda.

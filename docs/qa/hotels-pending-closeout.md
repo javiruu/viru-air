@@ -208,8 +208,7 @@ Fase 7A-7B:
 - tests backend del flujo de sweep
 
 Fase 8:
-- `backend/app/infrastructure/db/models.py`
-- `backend/alembic/versions/0019_hotels_normalized_city.py`
+- `backend/app/infrastructure/db/models.py` (columna de ciudad normalizada, aplicada con `create_all`/`schema_compat.py` — sin Alembic)
 - `backend/app/hotels/mapping.py`
 - `backend/app/services/hotels_service.py`
 - tests backend de normalizacion y busqueda
@@ -286,7 +285,7 @@ Completado en esta pasada:
 
 ### Estado: 🟢 Cerrado
 
-El plan de 5 fases adicionales definido en `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md` y consolidado en `cabinalimpia.txt` está completado.
+El plan de 5 fases adicionales definido en `docs/archive/plans/2026-06-04-hoteles-correcciones-post-cierre.md` y consolidado en `cabinalimpia.txt` está completado.
 
 Fases completadas en esta iteración:
 
@@ -310,7 +309,7 @@ Fases completadas en esta iteración:
 - `frontend/src/i18n/domains/hotels.ts` (+4 claves i18n)
 - `frontend/src/modules/hotels/HotelRadarPage.tsx` (+1 línea cableado `onDeleteCompSet`)
 - `cabinalimpia.txt` (nuevo — plan consolidado)
-- `docs/plans/2026-06-04-hoteles-correcciones-post-cierre.md` (nuevo)
+- `docs/archive/plans/2026-06-04-hoteles-correcciones-post-cierre.md` (nuevo)
 - `HISTORY.md` (nuevo)
 - `hoteles.txt`, `hoteles_2.txt`, `hoteles_3.txt` (eliminados — reemplazados por `cabinalimpia.txt` + plan en `docs/plans/`)
 
