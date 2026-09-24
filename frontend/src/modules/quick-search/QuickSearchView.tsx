@@ -121,7 +121,7 @@ import {
   type QuickSearchSummaryChip,
 } from "@/modules/quick-search/components/QuickSearchSummaryChips";
 import { QuickSearchAdvancedDrawer } from "@/modules/quick-search/components/QuickSearchAdvancedDrawer";
-import { QuickSearchNearbyBand } from "@/modules/quick-search/components/QuickSearchNearbyBand";
+import { QuickSearchNearbyDistance } from "@/modules/quick-search/components/QuickSearchNearbyDistance";
 import { QuickSearchAdditionalAirports } from "@/modules/quick-search/components/QuickSearchAdditionalAirports";
 import { PopularDestinationsChips } from "@/modules/community-routes/PopularDestinationsChips";
 import {
@@ -5347,6 +5347,17 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 }}
                 onOpenPicker={(id, trigger) => openAdditionalPicker("origin", id, trigger)}
               />
+              <div className="qs-route-nearby-toggle">
+                <label className={`qs-chip-toggle ${includeNearbyOrigins ? "active" : ""}`}>
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={includeNearbyOrigins}
+                    onChange={(e) => setIncludeNearbyOrigins(e.target.checked)}
+                  />
+                  {t("nearbyOrigin")}
+                </label>
+              </div>
             </div>
 
             <div className="qs-route-line">
@@ -5663,16 +5674,24 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                 }}
                 onOpenPicker={(id, trigger) => openAdditionalPicker("destination", id, trigger)}
               />
+              <div className="qs-route-nearby-toggle">
+                <label className={`qs-chip-toggle ${includeNearbyDestinations ? "active" : ""}`}>
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={includeNearbyDestinations}
+                    onChange={(e) => setIncludeNearbyDestinations(e.target.checked)}
+                  />
+                  {t("nearbyDestination")}
+                </label>
+              </div>
             </div>
           </div>
 
-          <QuickSearchNearbyBand
-            includeNearbyOrigins={includeNearbyOrigins}
-            includeNearbyDestinations={includeNearbyDestinations}
+          <QuickSearchNearbyDistance
+            isAnyNearby={includeNearbyOrigins || includeNearbyDestinations}
             radiusKm={radiusKm}
             t={t}
-            setIncludeNearbyOrigins={setIncludeNearbyOrigins}
-            setIncludeNearbyDestinations={setIncludeNearbyDestinations}
             setRadiusKm={updateRadiusKm}
           />
           <div className="qs-passengers">
