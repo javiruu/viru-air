@@ -256,6 +256,7 @@
 
 .qs-additional-airports__add {
   width: 100%;
+  min-width: 0;
   min-height: 44px;
   display: flex;
   align-items: center;
@@ -321,6 +322,7 @@
 }
 
 .qs-input {
+  min-width: 0;
   min-height: var(--qs-control-height);
   border: 1px solid var(--qs-input-border);
   border-radius: 12px;
@@ -2745,3 +2747,38 @@
   }
 }
 
+
+@media (max-width: 800px) {
+  .qs-route {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.25rem;
+  }
+  .qs-route-line {
+    width: 100%;
+    height: 32px;
+  }
+  .qs-route-line::before {
+    width: 2px;
+    height: 100%;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    background: linear-gradient(180deg, transparent, var(--qs-route-line), transparent);
+  }
+  .qs-route-swap {
+    transform: rotate(90deg);
+  }
+  .qs-route:hover .qs-route-swap {
+    transform: rotate(98deg) scale(1.02);
+  }
+}
+
+@media (max-width: 500px) {
+  .qs-date-grid,
+  .qs-date-grid.has-return {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .qs-date-grid.has-return > :nth-child(2) {
+    display: none;
+  }
+}

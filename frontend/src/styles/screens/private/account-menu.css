@@ -54,7 +54,8 @@
 
 .account-menu {
   position: relative;
-  min-width: 250px;
+  min-width: 0;
+  flex: 0 1 auto;
 }
 
 .account-trigger {
@@ -121,7 +122,11 @@
   position: absolute;
   right: 0;
   top: calc(100% + 0.45rem);
-  width: 100%;
+  width: 280px;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100vh - env(safe-area-inset-bottom, 20px) - 80px);
+  overflow-y: auto;
+  overflow-x: hidden;
   background: var(--color-dropdown-bg);
   border: 1px solid var(--color-dropdown-border);
   border-radius: 16px;
@@ -148,9 +153,11 @@
   justify-content: space-between;
   align-items: center;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .account-status-panel p {
+  word-break: break-word;
   margin: 0;
   font-size: 0.78rem;
   color: var(--ink-muted);
@@ -286,6 +293,9 @@
   padding: 0.56rem 0.62rem;
   font: inherit;
   cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   transition: background 0.16s ease, border-color 0.16s ease, transform 0.16s ease;
 }
 
@@ -343,3 +353,14 @@
   }
 }
 
+
+@media (max-width: 375px) {
+  .account-dropdown {
+    width: calc(100vw - 24px);
+  }
+  .account-logout {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+}
