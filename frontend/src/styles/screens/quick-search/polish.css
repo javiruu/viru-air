@@ -1610,7 +1610,9 @@ a.qs-provider-logo:focus-visible {
   gap: 0.95rem;
   padding: 1rem;
   padding-bottom: 1.4rem;
-  overflow: visible;
+  overflow-y: auto;
+  overflow-x: hidden;
+  max-height: calc(100vh - 100px);
 }
 
 .qs-filters-panel {

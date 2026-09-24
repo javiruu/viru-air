@@ -114,14 +114,17 @@ export default function LanguageSelector() {
         }}
       >
         <Image
-          className="language-selector__flag"
-          src={`/flags/${activeLanguage.countryCode}.svg`}
-          alt=""
-          width={24}
-          height={16}
-          unoptimized
-          aria-hidden="true"
-        />
+  className="language-selector__flag"
+  src={`/flags/${activeLanguage.countryCode}.svg`}
+  alt=""
+  width={24}
+  height={16}
+  unoptimized
+  aria-hidden="true"
+  onError={(e) => {
+    e.currentTarget.src = `https://flagcdn.com/w20/${activeLanguage.countryCode.toLowerCase()}.png`;
+  }}
+/>
         <span className="language-selector__short-label">{activeLanguage.shortLabel}</span>
         <ChevronDown
           className={`language-selector__chevron${isOpen ? " is-open" : ""}`}
@@ -170,14 +173,17 @@ export default function LanguageSelector() {
                 }}
               >
                 <Image
-                  className="language-selector__flag"
-                  src={`/flags/${language.countryCode}.svg`}
-                  alt=""
-                  width={28}
-                  height={19}
-                  unoptimized
-                  aria-hidden="true"
-                />
+  className="language-selector__flag"
+  src={`/flags/${activeLanguage.countryCode}.svg`}
+  alt=""
+  width={24}
+  height={16}
+  unoptimized
+  aria-hidden="true"
+  onError={(e) => {
+    e.currentTarget.src = `https://flagcdn.com/w20/${activeLanguage.countryCode.toLowerCase()}.png`;
+  }}
+/>
                 <span className="language-selector__option-copy">
                   <span>{language.label}</span>
                   <span className="language-selector__option-code">{language.shortLabel}</span>

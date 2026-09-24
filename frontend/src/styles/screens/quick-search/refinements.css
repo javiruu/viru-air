@@ -577,13 +577,13 @@
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--qs-input-border) 82%, var(--border));
-  background: color-mix(in srgb, var(--surface) 86%, #fff);
-  color: var(--ink);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--qs-text-secondary);
   display: inline-grid;
   place-items: center;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease, color 0.15s ease;
   z-index: 3;
 }
 
@@ -593,13 +593,13 @@
 }
 
 .qs-input-inline-action:hover {
-  border-color: var(--qs-input-border-strong);
+  background: color-mix(in srgb, var(--surface-2) 50%, transparent);
+  color: var(--ink);
 }
 
 .qs-input-inline-action:focus-visible {
   outline: none;
   box-shadow: var(--qs-focus-ring);
-  border-color: var(--qs-input-border-strong);
 }
 
 .qs-input-wrap:focus-within .qs-input-prefix {

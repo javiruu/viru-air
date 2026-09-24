@@ -109,59 +109,64 @@ function QuickSearchDatePickerInner(props: Props) {
   const [open, setOpen] = useState(Boolean(props.defaultOpen));
   const handleBlur = props.onBlur;
   const onVisibleMonthChange = props.onVisibleMonthChange;
-  const locale = props.localeTag.toLowerCase().startsWith("es")
-    ? {
-        openCalendar: "Abrir calendario",
-        closeCalendar: "Cerrar calendario",
-        previousMonth: "Mes anterior",
-        nextMonth: "Mes siguiente",
-        chooseDate: "Elige una fecha para continuar",
-        selectedDate: "Fecha seleccionada",
-        selectOutbound: "Selecciona salida",
-        selectReturn: "Añade vuelta",
-        outboundReady: "Salida elegida",
-        returnReady: "Vuelta elegida",
-        noPriceHint: "Sin datos de precio para este día",
-        stalePriceHint: "Referencia de precio anterior",
-        partialPriceHint: "Precio disponible con cobertura parcial",
-        providerTimeoutHint: "El proveedor tardó demasiado en responder",
-        providerUnavailableHint: "El proveedor no está disponible ahora",
-        currencyHint: "El precio recibido no se puede comparar en esta moneda",
-        limitedCoverageHint: "Cobertura limitada para este día",
-        referenceHint: "Precio disponible sin referencia suficiente para colorearlo",
-        countryEstimateMixed: "Estimación país",
-        countryEstimateCountryCountry: "Estimación país-país",
-        enableMultiple: "Seleccionar varios días",
-        disableMultiple: "Volver a una fecha",
-        selectedDates: "días seleccionados",
-        selectedLimit: "Máx. {count}",
-      }
-    : {
-        openCalendar: "Open calendar",
-        closeCalendar: "Close calendar",
-        previousMonth: "Previous month",
-        nextMonth: "Next month",
-        chooseDate: "Choose a date to continue",
-        selectedDate: "Selected date",
-        selectOutbound: "Select outbound",
-        selectReturn: "Add return",
-        outboundReady: "Outbound selected",
-        returnReady: "Return selected",
-        noPriceHint: "No fare data for this day",
-        stalePriceHint: "Earlier price reference",
-        partialPriceHint: "Price available with partial coverage",
-        providerTimeoutHint: "The provider took too long to respond",
-        providerUnavailableHint: "The provider is unavailable right now",
-        currencyHint: "This price cannot be compared in the selected currency",
-        limitedCoverageHint: "Limited coverage for this day",
-        referenceHint: "Price is available but needs more reference data for a color",
-        countryEstimateMixed: "Country estimate",
-        countryEstimateCountryCountry: "Country-country estimate",
-        enableMultiple: "Select multiple days",
-        disableMultiple: "Return to one date",
-        selectedDates: "selected days",
-        selectedLimit: "Max. {count}",
-      };
+
+  const locale = useMemo(() => {
+    const isEs = props.localeTag.toLowerCase().startsWith("es");
+    return isEs
+      ? {
+          openCalendar: "Abrir calendario",
+          closeCalendar: "Cerrar calendario",
+          previousMonth: "Mes anterior",
+          nextMonth: "Mes siguiente",
+          chooseDate: "Elige una fecha para continuar",
+          selectedDate: "Fecha seleccionada",
+          selectOutbound: "Selecciona salida",
+          selectReturn: "Añade vuelta",
+          outboundReady: "Salida elegida",
+          returnReady: "Vuelta elegida",
+          noPriceHint: "Sin datos de precio para este día",
+          stalePriceHint: "Referencia de precio anterior",
+          partialPriceHint: "Precio disponible con cobertura parcial",
+          providerTimeoutHint: "El proveedor tardó demasiado en responder",
+          providerUnavailableHint: "El proveedor no está disponible ahora",
+          currencyHint: "El precio recibido no se puede comparar en esta moneda",
+          limitedCoverageHint: "Cobertura limitada para este día",
+          referenceHint: "Precio disponible sin referencia suficiente para colorearlo",
+          countryEstimateMixed: "Estimación país",
+          countryEstimateCountryCountry: "Estimación país-país",
+          enableMultiple: "Seleccionar varios días",
+          disableMultiple: "Volver a una fecha",
+          selectedDates: "días seleccionados",
+          selectedLimit: "Máx. {count}",
+        }
+      : {
+          openCalendar: "Open calendar",
+          closeCalendar: "Close calendar",
+          previousMonth: "Previous month",
+          nextMonth: "Next month",
+          chooseDate: "Choose a date to continue",
+          selectedDate: "Selected date",
+          selectOutbound: "Select outbound",
+          selectReturn: "Add return",
+          outboundReady: "Outbound selected",
+          returnReady: "Return selected",
+          noPriceHint: "No fare data for this day",
+          stalePriceHint: "Earlier price reference",
+          partialPriceHint: "Price available with partial coverage",
+          providerTimeoutHint: "The provider took too long to respond",
+          providerUnavailableHint: "The provider is unavailable right now",
+          currencyHint: "This price cannot be compared in the selected currency",
+          limitedCoverageHint: "Limited coverage for this day",
+          referenceHint: "Price is available but needs more reference data for a color",
+          countryEstimateMixed: "Country estimate",
+          countryEstimateCountryCountry: "Country-country estimate",
+          enableMultiple: "Select multiple days",
+          disableMultiple: "Return to one date",
+          selectedDates: "selected days",
+          selectedLimit: "Max. {count}",
+        };
+  }, [props.localeTag]);
+
   const countryEstimateLabel =
     props.hintScopeMode === "country_country"
       ? locale.countryEstimateCountryCountry
@@ -192,15 +197,18 @@ function QuickSearchDatePickerInner(props: Props) {
   );
   const minDate = useMemo(() => parseIsoDate(props.min), [props.min]);
   const [multipleSelection, setMultipleSelection] = useState(false);
-  const [viewMonth, setViewMonth] = useState<Date>(() => {
-    return startOfMonth(selectedDate || minDate || new Date());
-  });
+  
+  const anchorDate = selectedDates[0] || selectedDate || minDate || new Date();
+  const anchorDateRef = useRef(anchorDate);
+  anchorDateRef.current = anchorDate;
+
+  const [viewMonth, setViewMonth] = useState<Date>(() => startOfMonth(anchorDate));
 
   useEffect(() => {
-    if (!open) return;
-    const anchorDate = selectedDates[0] || selectedDate || minDate || new Date();
-    setViewMonth(startOfMonth(anchorDate));
-  }, [open, selectedDate, selectedDates, minDate]);
+    if (open) {
+      setViewMonth(startOfMonth(anchorDateRef.current));
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open || !onVisibleMonthChange) return;
@@ -251,6 +259,22 @@ function QuickSearchDatePickerInner(props: Props) {
     });
   }, [props.localeTag]);
 
+  const selectedDateFormatter = useMemo(() => {
+    return new Intl.DateTimeFormat(props.localeTag, {
+      day: "numeric",
+      month: "short",
+    });
+  }, [props.localeTag]);
+
+  const selectedMetaFormatter = useMemo(() => {
+    return new Intl.DateTimeFormat(props.localeTag, {
+      weekday: "long",
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }, [props.localeTag]);
+
   const selectedCount = multipleSelection ? selectedDates.length : Number(Boolean(selectedDate));
   const maxSelections = props.maxSelections || 15;
   const multipleSummary =
@@ -258,18 +282,10 @@ function QuickSearchDatePickerInner(props: Props) {
   const selectedLabel =
     multipleSummary ||
     (selectedDate
-      ? new Intl.DateTimeFormat(props.localeTag, {
-          day: "numeric",
-          month: "short",
-        }).format(selectedDate)
+      ? selectedDateFormatter.format(selectedDate)
       : props.placeholder);
   const selectedMeta = selectedDate
-    ? new Intl.DateTimeFormat(props.localeTag, {
-        weekday: "long",
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }).format(selectedDate)
+    ? selectedMetaFormatter.format(selectedDate)
     : props.variant === "return"
       ? locale.selectReturn
       : locale.selectOutbound;

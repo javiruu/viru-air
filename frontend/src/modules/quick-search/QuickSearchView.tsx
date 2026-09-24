@@ -2800,7 +2800,7 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
             fareProfile,
           }) as any
       );
-      return res.data as any;
+      return (res.data ?? res) as any;
     }
 
   function canRefreshPrice(result: SearchResult) {
@@ -3504,13 +3504,16 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     return (
       <span className="qs-flag-emoji" aria-hidden="true" style={{ display: "inline-flex", alignItems: "center" }}>
         <Image
-          src={`/flags/${normalizedCode.toLowerCase()}.svg`}
-          alt={normalizedCode}
-          width={20}
-          height={14}
-          unoptimized
-          aria-hidden="true"
-        />
+  src={`/flags/${normalizedCode.toLowerCase()}.svg`}
+  alt={normalizedCode}
+  width={20}
+  height={14}
+  unoptimized
+  aria-hidden="true"
+  onError={(e) => {
+    e.currentTarget.src = `https://flagcdn.com/w20/${normalizedCode.toLowerCase()}.png`;
+  }}
+/>
       </span>
     );
   }
@@ -4021,11 +4024,9 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
     !travelDate ? t("summaryMissingDate") : null,
     tripType === "round_trip_incomplete" ? t("summaryRoundTripMissingReturn") : null,
   ].filter((value): value is string => Boolean(value));
-  const summaryDate = travelDate ? formatShortDate(travelDate) : "--";
-  const summaryOriginLabel = originCountryOnly ? originCountryOnly.name : origin || "---";
-  const summaryDestinationLabel = destinationCountryOnly
-    ? destinationCountryOnly.name
-    : destination || "---";
+  const summaryDate = selectedTravelDates.length > 1 ? `${selectedTravelDates.length} ${locale === 'es' ? 'fechas' : 'dates'}` : travelDate ? formatShortDate(travelDate) : '--';
+  const summaryOriginLabel = originCountryOnly ? originCountryOnly.name : additionalOrigins.length > 0 ? `${origin} +${additionalOrigins.length}` : origin || '---';
+  const summaryDestinationLabel = destinationCountryOnly ? destinationCountryOnly.name : additionalDestinations.length > 0 ? `${destination} +${additionalDestinations.length}` : destination || '---';
   const summaryTrip = `${summaryOriginLabel} -> ${summaryDestinationLabel}`;
   const summaryTripTypeLabel =
     tripType === "one_way"
@@ -6852,8 +6853,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                             null,
                         }) as any
                       );
-                      if (response && response.data) {
-                        const data = response.data as any;
+                      if (response) {
+                        const data = (response.data ?? response) as any;
                         markAsSaved(result, data.watch_id);
                         const isExisting =
                           "created_or_existing" in data &&
@@ -7011,8 +7012,8 @@ export function QuickSearchView({ mode = "quick-search" }: { mode?: QuickSearchM
                             null,
                         }) as any
                       );
-                      if (response && response.data) {
-                        const data = response.data as any;
+                      if (response) {
+                        const data = (response.data ?? response) as any;
                         markAsSaved(result, data.watch_id);
                         const isExisting =
                           "created_or_existing" in data &&
