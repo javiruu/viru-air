@@ -855,3 +855,78 @@ def test_quick_search_calendar_hints_rejects_unimplemented_cabin_values(client: 
     )
 
     assert response.status_code == 422
+
+
+def test_reproduce_500_with_large_destination_array(client, monkeypatch):
+    def mock_resolve_seed_airport(code):
+        pass
+    monkeypatch.setattr("app.api.v1.search.resolve_seed_airport", mock_resolve_seed_airport)
+    
+    payload = {
+        "aggregation_mode": "min",
+        "bucket_mode": "contextual",
+        "destination_iata": ["ABZ", "BFS", "BHX", "BOH", "BRS", "CWL", "DSA", "EDI", "EMA", "EXT", "GLA", "HUY", "INV", "LBA", "LPL", "MAN", "MME", "NCL", "NWI", "PIK", "SOU", "SYY"],
+        "month": "2026-09",
+        "origin_iata": "LEI"
+    }
+    response = client.post("/api/v1/search/quick/calendar-hints", json=payload)
+    if response.status_code != 200:
+        print(response.json())
+    assert response.status_code == 200
+
+
+def test_reproduce_500_with_large_destination_array_real(client_db, db_session):
+    from app.infrastructure.db.models import DbAirport
+    for code in ["ABZ", "BFS", "BHX", "BOH", "BRS", "CWL", "DSA", "EDI", "EMA", "EXT", "GLA", "HUY", "INV", "LBA", "LPL", "MAN", "MME", "NCL", "NWI", "PIK", "SOU", "SYY", "LEI"]:
+        if not db_session.query(DbAirport).filter_by(iata_code=code).first():
+            db_session.add(DbAirport(iata_code=code, city_name=code, country_code=code, is_primary=True, latitude=0.0, longitude=0.0))
+    db_session.commit()
+    
+    payload = {
+        "aggregation_mode": "min",
+        "bucket_mode": "contextual",
+        "destination_iata": ["ABZ", "BFS", "BHX", "BOH", "BRS", "CWL", "DSA", "EDI", "EMA", "EXT", "GLA", "HUY", "INV", "LBA", "LPL", "MAN", "MME", "NCL", "NWI", "PIK", "SOU", "SYY"],
+        "month": "2026-09",
+        "origin_iata": "LEI"
+    }
+    response = client_db.post("/api/v1/search/quick/calendar-hints", json=payload)
+    if response.status_code != 200:
+        print(response.json())
+    assert response.status_code == 200
+
+
+def test_reproduce_500_with_large_destination_array_duplicate(client, monkeypatch):
+    def mock_resolve_seed_airport(code):
+        pass
+    monkeypatch.setattr("app.api.v1.search.resolve_seed_airport", mock_resolve_seed_airport)
+    payload = {
+        "aggregation_mode": "min",
+        "bucket_mode": "contextual",
+        "destination_iata": ["ABZ", "BFS", "BHX", "BOH", "BRS", "CWL", "DSA", "EDI", "EMA", "EXT", "GLA", "HUY", "INV", "LBA", "LPL", "MAN", "MME", "NCL", "NWI", "PIK", "SOU", "SYY"],
+        "month": "2026-09",
+        "origin_iata": "LEI"
+    }
+    response = client.post("/api/v1/search/quick/calendar-hints", json=payload)
+    if response.status_code != 200:
+        print(response.json())
+    assert response.status_code == 200
+
+
+def test_reproduce_500_with_large_destination_array_real3(client_db, db_session):
+    from app.infrastructure.db.models import DbAirport
+    from sqlalchemy import select
+    
+    airports = db_session.execute(select(DbAirport.iata_code).limit(30)).scalars().all()
+    print("Found airports:", airports)
+    
+    payload = {
+        "aggregation_mode": "min",
+        "bucket_mode": "contextual",
+        "destination_iata": airports[:22],
+        "month": "2026-09",
+        "origin_iata": airports[23] if len(airports) > 23 else airports[0]
+    }
+    response = client_db.post("/api/v1/search/quick/calendar-hints", json=payload)
+    if response.status_code != 200:
+        print(response.json())
+    assert response.status_code == 200

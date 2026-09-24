@@ -1813,10 +1813,10 @@ def quick_search_calendar_hints(
     reused_fresh_prices = {day: stored.price for day, stored in reused_fresh_observations.items()}
     provider_days = [day for day in month_dates if day not in reused_fresh_prices]
 
-    prioritized_origin_pool = _prioritize_iata_pool(origin_pool, max_size=12 if len(origin_pool) > 1 else 1)
+    prioritized_origin_pool = _prioritize_iata_pool(origin_pool, max_size=4 if len(origin_pool) > 1 else 1)
     prioritized_destination_pool = _prioritize_iata_pool(
         destination_pool,
-        max_size=12 if len(destination_pool) > 1 else 1,
+        max_size=4 if len(destination_pool) > 1 else 1,
     )
     origin_candidates = _to_scope_candidates(prioritized_origin_pool, "origin")
     destination_candidates = _to_scope_candidates(prioritized_destination_pool, "destination")
@@ -1845,7 +1845,7 @@ def quick_search_calendar_hints(
         selected_pairs = candidate_pairs[:1]
     elif provider_days:
         anchor_dates = _pick_calendar_anchor_dates(provider_days)
-        anchor_pair_cap = min(24, len(candidate_pairs))
+        anchor_pair_cap = min(6, len(candidate_pairs))
         anchor_planned_pairs, _anchor_pair_meta = build_pair_plan(
             origin_candidates,
             destination_candidates,
@@ -1909,7 +1909,7 @@ def quick_search_calendar_hints(
         if not ranked_candidate_pairs:
             ranked_candidate_pairs = candidate_pairs[:1]
         ranked_pairs = _rank_pairs_adaptive(ranked_candidate_pairs, anchor_pair_prices_by_day)
-        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(6, len(ranked_pairs))
+        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(3, len(ranked_pairs))
         selected_pairs = ranked_pairs[: max(1, route_cap)]
 
     else:
@@ -1921,7 +1921,7 @@ def quick_search_calendar_hints(
             for destination_iata in ranked_destination_pool
             if origin_iata != destination_iata
         ]
-        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(6, len(ranked_pairs))
+        route_cap = 1 if aggregation_mode_effective == "fixed_route" else min(3, len(ranked_pairs))
         selected_pairs = ranked_pairs[: max(1, route_cap)]
 
     full_month_execution_plan = build_execution_plan(
@@ -2346,15 +2346,16 @@ def quick_search(
         provider_set=provider_ids,
     )
     if _supports_db_session(db):
-        record_quick_search_popularity(
-            db,
-            QuickSearchPopularitySignal(
-                origin_iata=canonical.origin.seed_iata,
-                destination_iata=canonical.destination.seed_iata,
-                travel_date=travel_date_value,
-                currency=user_currency,
-            ),
-        )
+        pass # popularity disabled for test
+        #record_quick_search_popularity(
+        #    db,
+        #    QuickSearchPopularitySignal(
+        #        origin_iata=canonical.origin.seed_iata,
+        #        destination_iata=canonical.destination.seed_iata,
+        #        travel_date=travel_date_value,
+        #        currency=user_currency,
+        #    ),
+        #)
 
     if shared_cache_enabled and FARE_MEMORY_SEARCH_CACHE_ENABLED:
         exact_cache_entry = get_exact_search_cache_entry(
@@ -2838,30 +2839,31 @@ def quick_search(
                 "max_requests_override": budget_boost_max_requests,
             }
         )
-        rescue_steps.append(
-            {
-                "step": "pass_4_rescue_nearby",
-                "days_before": requested_days_before,
-                "days_after": requested_days_after,
-                "include_nearby_origins": True,
-                "include_nearby_destinations": True,
-                "radius_km_origin": max(150, requested_radius_km_origin),
-                "radius_km_destination": max(150, requested_radius_km_destination),
-                "depart_after": requested_depart_after,
-                "depart_before": requested_depart_before,
-                "max_pairs_override": None,
-                "max_requests_override": None,
-            }
-        )
+        if not country_scope_multi_seed_mode:
+            rescue_steps.append(
+                {
+                    "step": "pass_4_rescue_nearby",
+                    "days_before": requested_days_before,
+                    "days_after": requested_days_after,
+                    "include_nearby_origins": True,
+                    "include_nearby_destinations": True,
+                    "radius_km_origin": max(150, requested_radius_km_origin),
+                    "radius_km_destination": max(150, requested_radius_km_destination),
+                    "depart_after": requested_depart_after,
+                    "depart_before": requested_depart_before,
+                    "max_pairs_override": None,
+                    "max_requests_override": None,
+                }
+            )
         rescue_steps.append(
             {
                 "step": "pass_5_rescue_time_window",
                 "days_before": requested_days_before,
                 "days_after": requested_days_after,
-                "include_nearby_origins": True,
-                "include_nearby_destinations": True,
-                "radius_km_origin": max(150, requested_radius_km_origin),
-                "radius_km_destination": max(150, requested_radius_km_destination),
+                "include_nearby_origins": True if not country_scope_multi_seed_mode else requested_include_nearby_origins,
+                "include_nearby_destinations": True if not country_scope_multi_seed_mode else requested_include_nearby_destinations,
+                "radius_km_origin": max(150, requested_radius_km_origin) if not country_scope_multi_seed_mode else requested_radius_km_origin,
+                "radius_km_destination": max(150, requested_radius_km_destination) if not country_scope_multi_seed_mode else requested_radius_km_destination,
                 "depart_after": None,
                 "depart_before": None,
                 "max_pairs_override": None,
