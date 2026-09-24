@@ -307,7 +307,7 @@ function QuickSearchDatePickerInner(props: Props) {
 
   return (
     <div
-      className={`qs-date-picker${open ? " is-open" : ""}${props.invalid ? " is-invalid" : ""}`}
+        className={`qs-date-picker${open ? " is-open" : ""}${props.invalid ? " is-invalid" : ""}${multipleSelection ? " is-multiple" : ""}`}
       data-ui="qs-date-picker-v2"
       ref={rootRef}
     >

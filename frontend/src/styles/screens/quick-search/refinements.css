@@ -2763,7 +2763,7 @@
   overflow: hidden;
 }
 
-.quick-search-shell:has(.qs-date-nav--multiple.is-active) .qs-flex-row {
+.quick-search-shell:has(.qs-date-picker.is-multiple) .qs-flex-row {
   grid-template-rows: 0fr;
   opacity: 0;
   margin-top: 0;
