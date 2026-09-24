@@ -196,7 +196,7 @@ function QuickSearchDatePickerInner(props: Props) {
     [props.selectedValues],
   );
   const minDate = useMemo(() => parseIsoDate(props.min), [props.min]);
-  const [multipleSelection, setMultipleSelection] = useState(false);
+  const [multipleSelection, setMultipleSelection] = useState(() => Boolean(props.selectedValues && props.selectedValues.length > 0));
   
   const anchorDate = selectedDates[0] || selectedDate || minDate || new Date();
   const anchorDateRef = useRef(anchorDate);
@@ -307,7 +307,7 @@ function QuickSearchDatePickerInner(props: Props) {
 
   return (
     <div
-        className={`qs-date-picker${open ? " is-open" : ""}${props.invalid ? " is-invalid" : ""}${multipleSelection ? " is-multiple" : ""}`}
+      className={`qs-date-picker${open ? " is-open" : ""}${props.invalid ? " is-invalid" : ""}${multipleSelection ? " is-multiple" : ""}`}
       data-ui="qs-date-picker-v2"
       ref={rootRef}
     >
