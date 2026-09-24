@@ -2748,3 +2748,24 @@
   transition: grid-template-rows 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
   overflow: hidden;
 }
+
+/* Hide qs-flex-row smoothly when qs-date-nav--multiple is active */
+.qs-flex-row {
+  display: grid;
+  grid-template-rows: 1fr;
+  opacity: 1;
+  margin-top: 0.5rem;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease, margin 0.3s ease;
+}
+
+.qs-flex-row > .qs-flex-control {
+  min-height: 0;
+  overflow: hidden;
+}
+
+body:has(.qs-date-nav--multiple.is-active) .qs-flex-row {
+  grid-template-rows: 0fr;
+  opacity: 0;
+  margin-top: 0;
+  pointer-events: none;
+}
