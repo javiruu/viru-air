@@ -7,6 +7,8 @@
 
 
 .private-account-controls-bar {
+  position: relative;
+  z-index: var(--shell-header-z);
   min-height: 52px;
 }
 
@@ -56,7 +58,6 @@
   position: relative;
   min-width: 0;
   flex: 0 1 auto;
-  z-index: 100;
 }
 
 .account-trigger {
@@ -121,7 +122,6 @@
 
 .account-dropdown {
   position: absolute;
-  z-index: 1000;
   right: 0;
   top: calc(100% + 0.45rem);
   width: 280px;
